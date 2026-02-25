@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiements - Trésorerie Familiale</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid white;
+        }
+
+        /* Status Badge */
+        #connectionStatus {
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+            flex: 1;
+        }
+
+        .config-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-card h2 {
+            color: var(--wa-teal);
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .btn-save {
+            background: linear-gradient(to right, var(--wa-teal), var(--wa-light-green));
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-toggle {
+            background: none;
+            border: none;
+            color: var(--wa-teal);
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #successOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 94, 84, 0.95);
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .success-icon { font-size: 4rem; margin-bottom: 20px; color: var(--wa-light-green); }
+
+        .table-responsive {
+            display: none;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .btn-delete-item {
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        #sectionMensuelle {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        footer {
+            background-color: var(--wa-dark-green);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+
+        #installBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: var(--wa-light-green);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+    </style>
+</head>
+<body onload="chargerConfigPaiement()">
+
+<div id="successOverlay">
+    <i class="fas fa-check-circle success-icon"></i>
+    <h2 id="overlayTitle">Paiement Enregistré !</h2>
+    <p id="overlayMsg">Le reçu a été généré avec succès.</p>
+</div>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><h1 id="headerFamilyName">Famille AMOUSSOU</h1></a>
+    <div id="connectionStatus" class="offline">Chargement...</div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+        <li class="nav-item"><a class="nav-link active" href="paiements.html">Paiements</a></li>
+        <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+        <li class="nav-item"><a class="nav-link" href="messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link" href="documents.html">Documents</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="config-card">
+        <h2><i class="fas fa-hand-holding-usd me-2"></i> Nouveau Paiement</h2>
+        
+        <div class="form-group">
+            <label>Membre</label>
+            <select id="selectMembre"><option value="">Sélectionner...</option></select>
+        </div>
+
+        <div class="form-group">
+            <label>Type de Cotisation</label>
+            <select id="selectCotis" onchange="gestionTypeCotisation()">
+                <option value="">Sélectionner...</option>
+            </select>
+        </div>
+
+        <div id="sectionMensuelle" style="display: none;">
+            <div class="row">
+                <div class="col-6">
+                    <label>Année</label>
+                    <select id="payAnnee"></select>
+                </div>
+                <div class="col-6">
+                    <label>Mois</label>
+                    <select id="payMois">
+                        <option value="Janvier">Janvier</option>
+                        <option value="Février">Février</option>
+                        <option value="Mars">Mars</option>
+                        <option value="Avril">Avril</option>
+                        <option value="Mai">Mai</option>
+                        <option value="Juin">Juin</option>
+                        <option value="Juillet">Juillet</option>
+                        <option value="Août">Août</option>
+                        <option value="Septembre">Septembre</option>
+                        <option value="Octobre">Octobre</option>
+                        <option value="Novembre">Novembre</option>
+                        <option value="Décembre">Décembre</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Montant (FCFA)</label>
+            <input type="number" id="payAmount" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label>Date du paiement</label>
+            <input type="date" id="payDate">
+        </div>
+
+        <button class="btn-save mt-3" id="btnSavePaiement">
+            <i class="fas fa-check"></i> ENREGISTRER LE PAIEMENT
+        </button>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-history me-2"></i> Historique 
+            <button class="btn-toggle" id="btnToggleTable" onclick="toggleHistorique()">Afficher</button>
+        </h2>
+        <div class="table-responsive" id="containerTable">
+            <table class="table table-sm table-striped mt-2">
+                <thead>
+                    <tr>
+                        <th>Date/Heure</th>
+                        <th>Membre</th>
+                        <th>Type</th>
+                        <th>Montant</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="bodyHistorique"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<button id="installBtn">
+    <i class="fas fa-download"></i> Installer l'App
+</button>
+
+<footer>
+    <div>Concepteur : <strong>Atizoun Plateny AMOUSSOU</strong></div>
+    <div>Email : atizoun@gmail.com | Tél : 01 97 74 40 35</div>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove, set, onDisconnect } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+    authDomain: "smartfam-a0e79.firebaseapp.com",
+    databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "smartfam-a0e79",
+    storageBucket: "smartfam-a0e79.firebasestorage.app",
+    messagingSenderId: "800136496795",
+    appId: "1:800136496795:web:c30cc46068e7103925283e"
+  };
+
+  // Initialisation Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const paiementsRef = ref(db, 'paiements');
+
+  // Gestion du statut de connexion (Bouton Notification)
+  const connectedRef = ref(db, ".info/connected");
+  onValue(connectedRef, (snap) => {
+    const statusDiv = document.getElementById('connectionStatus');
+    if (snap.val() === true) {
+      statusDiv.innerText = "En ligne";
+      statusDiv.className = "online";
+    } else {
+      statusDiv.innerText = "Hors ligne";
+      statusDiv.className = "offline";
+    }
+  });
+
+  // Synchronisation en temps réel de l'historique
+  onValue(paiementsRef, (snapshot) => {
+    const data = snapshot.val();
+    const liste = [];
+    if (data) {
+      Object.keys(data).forEach(key => {
+        liste.push({ firebaseId: key, ...data[key] });
+      });
+    }
+    renderHistoriqueUI(liste);
+  });
+
+  // Exportation des fonctions vers le scope global pour onclick
+  window.enregistrerPaiement = function() {
+    const selMembre = document.getElementById('selectMembre');
+    const montantRaw = document.getElementById('payAmount').value;
+    const date = document.getElementById('payDate').value;
+    const selCotis = document.getElementById('selectCotis');
+    
+    if(!selMembre.value || !montantRaw || !date || selCotis.selectedIndex <= 0) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+    }
+
+    const codeValidation = prompt("Veuillez saisir le code de sécurité pour valider cet enregistrement :");
+    if(codeValidation !== "11984") {
+        if(codeValidation !== null) alert("Code incorrect ! Enregistrement annulé.");
+        return;
+    }
+
+    const membre = selMembre.value.trim();
+    const cotisLabel = selCotis.options[selCotis.selectedIndex].text.trim();
+    const estMensuelle = cotisLabel.includes("(Mens.)");
+    const maintenant = new Date();
+    const horodatage = maintenant.toLocaleDateString('fr-FR') + ' ' + maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+
+    const nouveauPaiement = {
+        membre: membre,
+        montant: Number(montantRaw),
+        date: date,
+        cotisLabel: cotisLabel,
+        horodatage: horodatage,
+        concerneMois: estMensuelle ? document.getElementById('payMois').value : null,
+        concerneAnnee: estMensuelle ? document.getElementById('payAnnee').value : null
+    };
+
+    // Firebase gère automatiquement la file d'attente si hors-ligne
+    push(paiementsRef, nouveauPaiement)
+      .then(() => {
+        showOverlay("Paiement Enregistré !", "Données synchronisées avec le cloud.");
+        resetForm();
+      })
+      .catch((error) => {
+        console.error("Erreur de sauvegarde:", error);
+      });
+  };
+
+  window.supprimerPaiement = function(firebaseId) {
+    const code = prompt("Veuillez saisir le code de sécurité pour supprimer ce paiement :");
+    if(code === "11984") {
+        const itemRef = ref(db, `paiements/${firebaseId}`);
+        remove(itemRef).then(() => {
+            showOverlay("Suppression Réussie", "Le paiement a été retiré du cloud.");
+        });
+    } else if(code !== null) {
+        alert("Code incorrect !");
+    }
+  };
+
+  function resetForm() {
+    document.getElementById('selectMembre').selectedIndex = 0;
+    document.getElementById('payAmount').value = "";
+    document.getElementById('selectCotis').selectedIndex = 0;
+    document.getElementById('sectionMensuelle').style.display = "none";
+  }
+
+  function renderHistoriqueUI(historique) {
+    const body = document.getElementById('bodyHistorique');
+    const trie = [...historique].reverse();
+    body.innerHTML = trie.map((p) => {
+        const montantAffichage = Number(p.montant).toLocaleString('fr-FR');
+        let labelComplet = p.cotisLabel;
+        if(p.concerneMois) {
+            labelComplet += ` <br><small class="text-muted">(${p.concerneMois} ${p.concerneAnnee})</small>`;
+        }
+        return `
+        <tr>
+            <td><small>${p.horodatage}</small></td>
+            <td>${p.membre}</td>
+            <td>${labelComplet}</td>
+            <td>${montantAffichage}</td>
+            <td class="text-center">
+                <i class="fas fa-trash-alt btn-delete-item" onclick="supprimerPaiement('${p.firebaseId}')"></i>
+            </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // Liaison du bouton
+  document.getElementById('btnSavePaiement').onclick = window.enregistrerPaiement;
+</script>
+
+<script>
+    let configData = null;
+
+    function showOverlay(title, msg) {
+        document.getElementById('overlayTitle').innerText = title;
+        document.getElementById('overlayMsg').innerText = msg;
+        const overlay = document.getElementById('successOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+    }
+
+    function chargerConfigPaiement() {
+        const saved = localStorage.getItem('configTresorerie');
+        if(saved) {
+            configData = JSON.parse(saved);
+            document.getElementById('headerFamilyName').innerText = configData.nom || "Famille AMOUSSOU";
+            
+            const selMembre = document.getElementById('selectMembre');
+            configData.listes.membres.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m;
+                selMembre.appendChild(opt);
+            });
+
+            const selCotis = document.getElementById('selectCotis');
+            configData.listes.mensuelles.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.amount;
+                opt.innerText = c.label + " (Mens.)";
+                selCotis.appendChild(opt);
+            });
+            configData.listes.speciales.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.amount;
+                opt.innerText = c.label + " (Spéc.)";
+                selCotis.appendChild(opt);
+            });
+
+            const selAnnee = document.getElementById('payAnnee');
+            selAnnee.innerHTML = "";
+            const currentYear = new Date().getFullYear();
+            if(configData.listes.annees && configData.listes.annees.length > 0) {
+                configData.listes.annees.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.innerText = y;
+                    selAnnee.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement('option');
+                opt.value = currentYear;
+                opt.innerText = currentYear;
+                selAnnee.appendChild(opt);
+            }
+
+            document.getElementById('payDate').valueAsDate = new Date();
+            const moisActuel = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date());
+            const moisCapi = moisActuel.charAt(0).toUpperCase() + moisActuel.slice(1);
+            const optMois = Array.from(document.getElementById('payMois').options);
+            const foundMois = optMois.find(o => o.value === moisCapi);
+            if(foundMois) document.getElementById('payMois').value = foundMois.value;
+        } else {
+            alert("Veuillez d'abord configurer la famille dans la page Configuration.");
+        }
+    }
+
+    function gestionTypeCotisation() {
+        const sel = document.getElementById('selectCotis');
+        const sectionM = document.getElementById('sectionMensuelle');
+        document.getElementById('payAmount').value = sel.value;
+        if(sel.options[sel.selectedIndex].text.includes("(Mens.)")) {
+            sectionM.style.display = "block";
+        } else {
+            sectionM.style.display = "none";
+        }
+    }
+
+    function toggleHistorique() {
+        const table = document.getElementById('containerTable');
+        const btn = document.getElementById('btnToggleTable');
+        if (table.style.display === "none" || table.style.display === "") {
+            table.style.display = "block";
+            btn.innerText = "Masquer";
+        } else {
+            table.style.display = "none";
+            btn.innerText = "Afficher";
+        }
+    }
+
+    // --- Logique PWA ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+    });
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

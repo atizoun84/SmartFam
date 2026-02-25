@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - Trésorerie Familiale</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#075E54">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041916.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Statut de connexion */
+        #connectionStatus {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            z-index: 1050;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .status-online { background: var(--wa-light-green); color: white; }
+        .status-offline { background: #dc3545; color: white; }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+        
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: white;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+            flex: 1;
+        }
+
+        .config-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-card h2 {
+            color: var(--wa-teal);
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"], 
+        input[type="number"], 
+        input[type="email"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--wa-light-green);
+        }
+
+        .btn-save {
+            background: linear-gradient(to right, var(--wa-teal), var(--wa-light-green));
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .btn-unlock {
+            background: #dc3545 !important;
+        }
+
+        .btn-add {
+            background-color: var(--wa-teal);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .btn-toggle {
+            background: none;
+            border: none;
+            color: var(--wa-teal);
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #successOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 94, 84, 0.95);
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--wa-light-green);
+        }
+
+        .hidden-list {
+            display: none;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .list-item {
+            background: #f9f9f9;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-delete-item {
+            color: #dc3545;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .locked-text, .locked-text input, .locked-text label {
+            font-weight: bold !important;
+            color: var(--wa-dark-green) !important;
+        }
+
+        footer {
+            background-color: var(--wa-dark-green);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+
+        #installBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: var(--wa-light-green);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="connectionStatus" class="status-offline"><i class="fas fa-sync fa-spin"></i> Initialisation...</div>
+
+<div id="successOverlay">
+    <i class="fas fa-check-circle success-icon" id="overlayIcon"></i>
+    <h2 id="overlayTitle">Configuration Enregistrée !</h2>
+    <p id="overlayMsg">Synchronisation Cloud terminée.</p>
+</div>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><h1 id="headerFamilyName">Famille AMOUSSOU</h1></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link active" href="config.html">Configuration</a></li>
+        <li class="nav-item"><a class="nav-link" href="paiements.html">Paiements</a></li>
+        <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+        <li class="nav-item"><a class="nav-link" href="messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link" href="documents.html">Documents</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="config-card" id="cardGeneraux">
+        <h2><i class="fas fa-cogs"></i> Paramètres Généraux</h2>
+        <div class="form-group">
+            <label>Nom de la Famille</label>
+            <input type="text" id="familyName" placeholder="Ex: Famille AMOUSSOU">
+        </div>
+        <div class="form-group"><label>Président & WhatsApp</label>
+            <input type="text" id="presName" placeholder="Nom">
+            <input type="tel" id="presTel" placeholder="Téléphone" class="mt-1">
+        </div>
+        <div class="form-group"><label>Secrétaire & WhatsApp</label>
+            <input type="text" id="secName" placeholder="Nom">
+            <input type="tel" id="secTel" placeholder="Téléphone" class="mt-1">
+        </div>
+        <div class="form-group"><label>Trésorier & WhatsApp</label>
+            <input type="text" id="tresName" placeholder="Nom">
+            <input type="tel" id="tresTel" placeholder="Téléphone" class="mt-1">
+        </div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-history"></i> Années d'Exercice
+            <button class="btn-toggle" onclick="toggleVisibility('listAnnees')">Voir (<span id="countAnnees">0</span>)</button>
+        </h2>
+        <div class="form-group">
+            <input type="number" id="exerciceYear" placeholder="Ex: 2026">
+            <button class="btn-add" id="btnAddY" onclick="ajouterElement('annee')">Ajouter</button>
+        </div>
+        <div id="listAnnees" class="hidden-list"></div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-calendar-alt"></i> Cotis. Mensuelles 
+            <button class="btn-toggle" onclick="toggleVisibility('listMensuelle')">Voir (<span id="countMensuelle">0</span>)</button>
+        </h2>
+        <div class="form-group">
+            <input type="text" id="mLabel" placeholder="Libellé">
+            <input type="number" id="mAmount" placeholder="Montant" class="mt-1">
+            <button class="btn-add" id="btnAddM" onclick="ajouterElement('mensuelle')">Ajouter</button>
+        </div>
+        <div id="listMensuelle" class="hidden-list"></div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-star"></i> Cotis. Spéciales
+            <button class="btn-toggle" onclick="toggleVisibility('listSpeciale')">Voir (<span id="countSpeciale">0</span>)</button>
+        </h2>
+        <div class="form-group">
+            <input type="text" id="sLabel" placeholder="Libellé">
+            <input type="number" id="sAmount" placeholder="Montant" class="mt-1">
+            <button class="btn-add" id="btnAddS" onclick="ajouterElement('speciale')">Ajouter</button>
+        </div>
+        <div id="listSpeciale" class="hidden-list"></div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-users"></i> Membres
+            <button class="btn-toggle" onclick="toggleVisibility('listMembres')">Voir (<span id="countMembres">0</span>)</button>
+        </h2>
+        <div class="form-group">
+            <input type="text" id="memberName" placeholder="Nom du membre">
+            <button class="btn-add" id="btnAddMem" onclick="ajouterElement('membre')">Ajouter</button>
+        </div>
+        <div id="listMembres" class="hidden-list"></div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-file-export"></i> Import / Export</h2>
+        <p class="small text-muted">Sauvegardez vos données ou restaurez une configuration.</p>
+        <div class="d-flex gap-2">
+            <button class="btn-add w-50" onclick="exporterDonnees()">Exporter JSON</button>
+            <button class="btn-add w-50 bg-secondary" onclick="document.getElementById('importFile').click()">Importer JSON</button>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importerDonnees(event)">
+        </div>
+    </div>
+
+    <button id="btnPrincipal" class="btn-save mt-3 mb-5" onclick="toggleLock()">
+        <i class="fas fa-save"></i> ENREGISTRER TOUT
+    </button>
+</div>
+
+<button id="installBtn">
+    <i class="fas fa-download"></i> Installer l'App
+</button>
+
+<footer>
+    <div>Concepteur : <strong>Atizoun Plateny AMOUSSOU</strong></div>
+    <div>Email : atizoun@gmail.com | Tél : 01 97 74 40 35</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="module">
+    // --- IMPORT FIREBASE ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, goOnline, goOffline } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+        authDomain: "smartfam-a0e79.firebaseapp.com",
+        databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "smartfam-a0e79",
+        storageBucket: "smartfam-a0e79.firebasestorage.app",
+        messagingSenderId: "800136496795",
+        appId: "1:800136496795:web:c30cc46068e7103925283e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- VARIABLES GLOBALES ---
+    let donnees = { mensuelles: [], speciales: [], membres: [], annees: [] };
+    let isLocked = false;
+    const STATUS_EL = document.getElementById('connectionStatus');
+
+    // --- LOGIQUE DE CONNEXION ---
+    window.addEventListener('online', () => {
+        goOnline(db);
+        updateStatus(true);
+        syncLocalToCloud();
+    });
+    window.addEventListener('offline', () => {
+        goOffline(db);
+        updateStatus(false);
+    });
+
+    function updateStatus(online) {
+        if(online) {
+            STATUS_EL.innerHTML = '<i class="fas fa-wifi"></i> En ligne';
+            STATUS_EL.className = 'status-online';
+        } else {
+            STATUS_EL.innerHTML = '<i class="fas fa-plane"></i> Hors ligne';
+            STATUS_EL.className = 'status-offline';
+        }
+    }
+
+    // --- INITIALISATION ---
+    window.chargerDonnees = function() {
+        updateStatus(navigator.onLine);
+        
+        // Charger d'abord le local
+        const saved = localStorage.getItem('configTresorerie');
+        if(saved) {
+            renderUI(JSON.parse(saved));
+        }
+
+        // Écouter les changements Firebase
+        const configRef = ref(db, 'configTresorerie');
+        onValue(configRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                localStorage.setItem('configTresorerie', JSON.stringify(data));
+                renderUI(data);
+                if(!isLocked) appliquerVerrou(true);
+            }
+        });
+    }
+
+    function renderUI(parsed) {
+        document.getElementById('familyName').value = parsed.nom || "";
+        document.getElementById('headerFamilyName').innerText = parsed.nom || "Famille AMOUSSOU";
+        document.getElementById('presName').value = parsed.president ? parsed.president.nom : "";
+        document.getElementById('presTel').value = parsed.president ? parsed.president.tel : "";
+        document.getElementById('secName').value = parsed.secretaire ? parsed.secretaire.nom : "";
+        document.getElementById('secTel').value = parsed.secretaire ? parsed.secretaire.tel : "";
+        document.getElementById('tresName').value = parsed.tresorier ? parsed.tresorier.nom : "";
+        document.getElementById('tresTel').value = parsed.tresorier ? parsed.tresorier.tel : "";
+        donnees = parsed.listes || { mensuelles: [], speciales: [], membres: [], annees: [] };
+        
+        if(!donnees.annees) donnees.annees = [];
+
+        renderList('listMensuelle', donnees.mensuelles, 'countMensuelle', 'mensuelle');
+        renderList('listSpeciale', donnees.speciales, 'countSpeciale', 'speciale');
+        renderList('listMembres', donnees.membres, 'countMembres', 'membre');
+        renderList('listAnnees', donnees.annees, 'countAnnees', 'annee');
+    }
+
+    // --- SAUVEGARDE ET SYNC ---
+    window.validerConfig = function() {
+        const name = document.getElementById('familyName').value;
+        const configFamily = {
+            nom: name,
+            president: { nom: document.getElementById('presName').value, tel: document.getElementById('presTel').value },
+            secretaire: { nom: document.getElementById('secName').value, tel: document.getElementById('secTel').value },
+            tresorier: { nom: document.getElementById('tresorierName')?.value || document.getElementById('tresName').value, tel: document.getElementById('tresTel').value },
+            listes: donnees,
+            lastUpdated: Date.now()
+        };
+        
+        // Local first
+        localStorage.setItem('configTresorerie', JSON.stringify(configFamily));
+        if(name) document.getElementById('headerFamilyName').innerText = name;
+
+        // Cloud sync
+        set(ref(db, 'configTresorerie'), configFamily)
+            .catch(err => console.log("Cloud sync delayed (offline)"));
+    }
+
+    function syncLocalToCloud() {
+        const local = localStorage.getItem('configTresorerie');
+        if(local) {
+            set(ref(db, 'configTresorerie'), JSON.parse(local));
+        }
+    }
+
+    // --- FONCTIONS UI (EXPOSÉES AU WINDOW) ---
+    window.toggleVisibility = function(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+
+    window.ajouterElement = function(type) {
+        if(isLocked) return;
+        let changed = false;
+        if(type === 'mensuelle') {
+            const l = document.getElementById('mLabel').value;
+            const a = document.getElementById('mAmount').value;
+            if(l && a) { 
+                donnees.mensuelles.push({label: l, amount: a}); 
+                document.getElementById('mLabel').value = '';
+                document.getElementById('mAmount').value = '';
+                changed = true;
+            }
+        } else if(type === 'speciale') {
+            const l = document.getElementById('sLabel').value;
+            const a = document.getElementById('sAmount').value;
+            if(l && a) { 
+                donnees.speciales.push({label: l, amount: a}); 
+                document.getElementById('sLabel').value = '';
+                document.getElementById('sAmount').value = '';
+                changed = true;
+            }
+        } else if(type === 'membre') {
+            const n = document.getElementById('memberName').value;
+            if(n) { 
+                donnees.membres.push(n); 
+                document.getElementById('memberName').value = '';
+                changed = true;
+            }
+        } else if(type === 'annee') {
+            const y = document.getElementById('exerciceYear').value;
+            if(y && !donnees.annees.includes(y)) {
+                donnees.annees.push(y);
+                donnees.annees.sort((a,b) => b - a);
+                document.getElementById('exerciceYear').value = '';
+                changed = true;
+            }
+        }
+        if(changed) {
+            renderListUI(type);
+            validerConfig();
+        }
+    }
+
+    window.supprimerElement = function(type, index) {
+        if(isLocked) return;
+        const code = prompt("Veuillez saisir le code de sécurité pour supprimer cet élément :");
+        if(code === "11984") {
+            if(type === 'mensuelle') donnees.mensuelles.splice(index, 1);
+            else if(type === 'speciale') donnees.speciales.splice(index, 1);
+            else if(type === 'membre') donnees.membres.splice(index, 1);
+            else if(type === 'annee') donnees.annees.splice(index, 1);
+            
+            renderListUI(type);
+            validerConfig();
+        } else if(code !== null) {
+            alert("Code incorrect !");
+        }
+    }
+
+    function renderListUI(type) {
+        if(type === 'mensuelle') renderList('listMensuelle', donnees.mensuelles, 'countMensuelle', 'mensuelle');
+        if(type === 'speciale') renderList('listSpeciale', donnees.speciales, 'countSpeciale', 'speciale');
+        if(type === 'membre') renderList('listMembres', donnees.membres, 'countMembres', 'membre');
+        if(type === 'annee') renderList('listAnnees', donnees.annees, 'countAnnees', 'annee');
+    }
+
+    function renderList(id, arr, countId, type) {
+        const cont = document.getElementById(id);
+        const countEl = document.getElementById(countId);
+        cont.innerHTML = arr.map((item, index) => `
+            <div class="list-item">
+                <span>${typeof item === 'string' ? item : (item.label ? item.label + ' (' + item.amount + ' FCFA)' : item)}</span>
+                <div>
+                    <i class="fas fa-check text-success me-2"></i>
+                    <i class="fas fa-trash-alt btn-delete-item" onclick="supprimerElement('${type}', ${index})" ${isLocked ? 'style="display:none"' : ''}></i>
+                </div>
+            </div>`).join('');
+        countEl.innerText = arr.length;
+    }
+
+    window.toggleLock = function() {
+        if (!isLocked) {
+            validerConfig();
+            appliquerVerrou(true);
+            showOverlay("Configuration Enregistrée !", "Données synchronisées avec le Cloud.", "fa-check-circle");
+        } else {
+            appliquerVerrou(false);
+            showOverlay("Mode Édition Activé", "Vous pouvez maintenant modifier les paramètres.", "fa-lock-open");
+        }
+    }
+
+    function appliquerVerrou(lock) {
+        isLocked = lock;
+        const btn = document.getElementById('btnPrincipal');
+        const inputs = document.querySelectorAll('input:not(#importFile)');
+        const cardGen = document.getElementById('cardGeneraux');
+        const deleteBtns = document.querySelectorAll('.btn-delete-item');
+
+        inputs.forEach(i => i.disabled = lock);
+        ['btnAddM', 'btnAddS', 'btnAddMem', 'btnAddY'].forEach(id => document.getElementById(id).disabled = lock);
+        deleteBtns.forEach(b => b.style.display = lock ? 'none' : 'inline-block');
+
+        if (lock) {
+            btn.innerHTML = '<i class="fas fa-lock-open"></i> DEVERROUILLER';
+            btn.classList.add('btn-unlock');
+            cardGen.classList.add('locked-text');
+        } else {
+            btn.innerHTML = '<i class="fas fa-save"></i> ENREGISTRER TOUT';
+            btn.classList.remove('btn-unlock');
+            cardGen.classList.remove('locked-text');
+        }
+    }
+
+    function showOverlay(title, msg, iconClass) {
+        document.getElementById('overlayTitle').innerText = title;
+        document.getElementById('overlayMsg').innerText = msg;
+        document.getElementById('overlayIcon').className = "fas " + iconClass + " success-icon";
+        const overlay = document.getElementById('successOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => { overlay.style.display = 'none'; }, 1500);
+    }
+
+    // --- IMPORT / EXPORT ---
+    window.exporterDonnees = function() {
+        const fullData = {
+            config: JSON.parse(localStorage.getItem('configTresorerie') || "{}"),
+            historique: JSON.parse(localStorage.getItem('historiquePaiements') || "[]"),
+            archives: JSON.parse(localStorage.getItem('archivesDocuments') || "[]")
+        };
+        const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tresorerie_Backup_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+        a.click();
+    }
+
+    window.importerDonnees = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (confirm("L'importation remplacera toutes les données actuelles (Cloud et Local). Continuer ?")) {
+                    if (imported.config) {
+                        localStorage.setItem('configTresorerie', JSON.stringify(imported.config));
+                        set(ref(db, 'configTresorerie'), imported.config);
+                    }
+                    if (imported.historique) localStorage.setItem('historiquePaiements', JSON.stringify(imported.historique));
+                    if (imported.archives) localStorage.setItem('archivesDocuments', JSON.stringify(imported.archives));
+                    alert("Importation réussie !");
+                    window.location.reload();
+                }
+            } catch (err) { alert("Erreur lors de la lecture du fichier JSON."); }
+        };
+        reader.readAsText(file);
+    }
+
+    // Lancer au démarrage
+    chargerDonnees();
+</script>
+
+<script>
+    // PWA & Install Button
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('PWA Error', err));
+        });
+    }
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+    });
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>

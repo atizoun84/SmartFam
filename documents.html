@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents - Trésorerie Familiale</title>
+    <meta name="theme-color" content="#075E54">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+
+        /* Status Badge */
+        #connectionStatus {
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .config-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-card h2 {
+            color: var(--wa-teal);
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+
+        .btn-generate {
+            background: var(--wa-teal);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px;
+            width: 100%;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-generate:hover {
+            background: var(--wa-dark-green);
+            color: white;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background-color: var(--wa-dark-green);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        #rapportAperçu {
+            background: white;
+            padding: 20px;
+            border: 1px solid #eee;
+            min-height: 200px;
+            overflow-x: auto;
+        }
+
+        .btn-print { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+        .btn-png { background: #e67e22; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+        .btn-archive { background: var(--wa-teal); color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+
+        .sig-upload-box {
+            font-size: 0.8rem;
+            border: 1px dashed var(--wa-teal);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .sig-preview-img {
+            max-height: 50px;
+            display: block;
+            margin-top: 5px;
+            border: 1px solid #eee;
+        }
+
+        .doc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        .doc-info { flex-grow: 1; }
+        .doc-actions i { cursor: pointer; margin-left: 10px; transition: 0.2s; }
+        .doc-actions i:hover { color: var(--wa-teal); }
+        .fa-trash-alt:hover { color: #dc3545 !important; }
+
+        @media print {
+            @page {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+            body {
+                background: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            #rapportAperçu {
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 8pt !important;
+                color: black !important;
+            }
+            .table { width: 100% !important; border-collapse: collapse !important; }
+            .table th, .table td { border: 1px solid #333 !important; padding: 4px !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body onload="chargerDocuments()">
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><h1 id="headerFamilyName">Famille AMOUSSOU</h1></a>
+    <div id="connectionStatus" class="offline">Connexion...</div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+        <li class="nav-item"><a class="nav-link" href="paiements.html">Paiements</a></li>
+        <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+        <li class="nav-item"><a class="nav-link" href="messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link active" href="documents.html">Documents</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <button class="btn-generate" data-bs-toggle="modal" data-bs-target="#modalRapport">
+        <i class="fas fa-file-invoice me-2"></i> GÉNÉRER UN ÉTAT FINANCIER
+    </button>
+
+    <div class="config-card">
+        <h2><i class="fas fa-pen-nib me-2"></i> Signatures du Bureau</h2>
+        <div class="sig-upload-box">
+            <label class="fw-bold">Signature Président</label>
+            <input type="file" id="sigPres" accept="image/*" onchange="stockerSignature('pres')">
+            <img id="viewPres" class="sig-preview-img" src="" style="display:none">
+        </div>
+        <div class="sig-upload-box">
+            <label class="fw-bold">Signature Secrétaire</label>
+            <input type="file" id="sigSec" accept="image/*" onchange="stockerSignature('sec')">
+            <img id="viewSec" class="sig-preview-img" src="" style="display:none">
+        </div>
+        <div class="sig-upload-box">
+            <label class="fw-bold">Signature Trésorier</label>
+            <input type="file" id="sigTres" accept="image/*" onchange="stockerSignature('tres')">
+            <img id="viewTres" class="sig-preview-img" src="" style="display:none">
+        </div>
+        <small class="text-muted"><i class="fas fa-info-circle"></i> Ces images apparaîtront au bas de vos rapports.</small>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-folder-open me-2"></i> Documents de la Famille</h2>
+        <div id="zoneDocuments">
+            <div class="empty-state">
+                <i class="fas fa-file-pdf"></i>
+                <p>Aucun document disponible.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalRapport" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Paramètres du Rapport</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Année</label>
+                        <div class="d-flex gap-1">
+                            <select id="rapportAnnee"></select>
+                            <button class="btn btn-outline-success btn-sm mb-3" onclick="ajouterAnneeManuelle()" title="Ajouter une année">+</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Cotisation / Type</label>
+                        <select id="rapportCotis">
+                            <option value="ALL">Tout (Recettes & Dépenses)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Mois Début</label>
+                        <select id="rapportMoisDebut">
+                            <option value="0">Janvier</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">Mois Fin</label>
+                        <select id="rapportMoisFin">
+                            <option value="11" selected>Décembre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+                <div id="printArea">
+                    <div id="rapportAperçu" class="mt-3">
+                        <p class="text-center text-muted">L'aperçu du rapport s'affichera ici après clic sur "Aperçu".</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex flex-wrap justify-content-between gap-2">
+                <div>
+                    <button class="btn btn-sm btn-print" onclick="imprimerPro()">
+                        <i class="fas fa-print me-1"></i> Imprimer
+                    </button>
+                    <button class="btn btn-sm btn-png" onclick="exporterPNG()">
+                        <i class="fas fa-image me-1"></i> PNG
+                    </button>
+                    <button class="btn btn-sm btn-archive" onclick="archiverRapport()">
+                        <i class="fas fa-save me-1"></i> Archiver
+                    </button>
+                </div>
+                <button type="button" class="btn btn-success" onclick="genererAperçu()">
+                    <i class="fas fa-sync me-1"></i> Aperçu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalViewDoc" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Consultation Document</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imgViewFull" src="" style="max-width: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+        authDomain: "smartfam-a0e79.firebaseapp.com",
+        databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "smartfam-a0e79",
+        storageBucket: "smartfam-a0e79.firebasestorage.app",
+        messagingSenderId: "800136496795",
+        appId: "1:800136496795:web:c30cc46068e7103925283e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- Gestion du Statut de Connexion ---
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+        const statusDiv = document.getElementById('connectionStatus');
+        if (snap.val() === true) {
+            statusDiv.innerText = "En ligne";
+            statusDiv.className = "online";
+        } else {
+            statusDiv.innerText = "Hors ligne";
+            statusDiv.className = "offline";
+        }
+    });
+
+    // --- Écoute des Paiements Cloud ---
+    onValue(ref(db, 'paiements'), (snapshot) => {
+        const data = snapshot.val();
+        window.historiquePaiementsCloud = data ? Object.keys(data).map(k => data[k]) : [];
+    });
+
+    // --- Écoute des Dépenses Cloud ---
+    onValue(ref(db, 'depenses'), (snapshot) => {
+        const data = snapshot.val();
+        window.depensesCloud = data ? Object.keys(data).map(k => data[k]) : [];
+    });
+</script>
+
+<script>
+    const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    let signaturesBureau = { pres: "", sec: "", tres: "" };
+    window.historiquePaiementsCloud = [];
+    window.depensesCloud = [];
+
+    function formaterDateLongue(timestampOuDate) {
+        if (!timestampOuDate) return "-";
+        const d = new Date(timestampOuDate);
+        if (isNaN(d.getTime())) return timestampOuDate;
+        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function stockerSignature(role) {
+        const file = document.getElementById('sig' + role.charAt(0).toUpperCase() + role.slice(1)).files[0];
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            signaturesBureau[role] = reader.result;
+            localStorage.setItem('signaturesBureau', JSON.stringify(signaturesBureau));
+            afficherSignaturesStatiques();
+        }
+        if (file) reader.readAsDataURL(file);
+    }
+
+    function afficherSignaturesStatiques() {
+        if(signaturesBureau.pres) { document.getElementById('viewPres').src = signaturesBureau.pres; document.getElementById('viewPres').style.display = 'block'; }
+        if(signaturesBureau.sec) { document.getElementById('viewSec').src = signaturesBureau.sec; document.getElementById('viewSec').style.display = 'block'; }
+        if(signaturesBureau.tres) { document.getElementById('viewTres').src = signaturesBureau.tres; document.getElementById('viewTres').style.display = 'block'; }
+    }
+
+    function chargerDocuments() {
+        const configSaved = localStorage.getItem('configTresorerie');
+        const sigsSaved = localStorage.getItem('signaturesBureau');
+        if(sigsSaved) { signaturesBureau = JSON.parse(sigsSaved); afficherSignaturesStatiques(); }
+
+        if(configSaved) {
+            const configData = JSON.parse(configSaved);
+            document.getElementById('headerFamilyName').innerText = configData.nom || "Famille AMOUSSOU";
+            
+            const mDebut = document.getElementById('rapportMoisDebut');
+            const mFin = document.getElementById('rapportMoisFin');
+            const sCotis = document.getElementById('rapportCotis');
+            const sAnnee = document.getElementById('rapportAnnee');
+            
+            mDebut.innerHTML = ''; mFin.innerHTML = '';
+            moisNoms.forEach((m, idx) => {
+                mDebut.innerHTML += `<option value="${idx}">${m}</option>`;
+                mFin.innerHTML += `<option value="${idx}" ${idx === 11 ? 'selected' : ''}>${m}</option>`;
+            });
+
+            sAnnee.innerHTML = "";
+            if(configData.listes && configData.listes.annees && configData.listes.annees.length > 0) {
+                configData.listes.annees.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y; opt.innerText = y;
+                    sAnnee.appendChild(opt);
+                });
+            } else {
+                const curY = new Date().getFullYear();
+                sAnnee.innerHTML = `<option value="${curY}">${curY}</option>`;
+            }
+
+            if (configData.listes) {
+                configData.listes.mensuelles.forEach(c => sCotis.innerHTML += `<option value="${c.label} (Mens.)">${c.label} (Mens.)</option>`);
+                configData.listes.speciales.forEach(c => sCotis.innerHTML += `<option value="${c.label} (Spéc.)">${c.label} (Spéc.)</option>`);
+            }
+        }
+        renderListeArchivée();
+    }
+
+    function genererAperçu() {
+        const configSaved = localStorage.getItem('configTresorerie');
+        const configData = configSaved ? JSON.parse(configSaved) : { listes: { membres: [] } };
+        const anneeSelectionnee = document.getElementById('rapportAnnee').value;
+        const cotisFiltreRaw = document.getElementById('rapportCotis').value;
+        const cotisFiltrePure = cotisFiltreRaw.replace(' (Mens.)', '').replace(' (Spéc.)', '').trim().toLowerCase();
+        
+        const debut = parseInt(document.getElementById('rapportMoisDebut').value);
+        const fin = parseInt(document.getElementById('rapportMoisFin').value);
+        const famille = document.getElementById('headerFamilyName').innerText;
+        
+        // Utilisation des données Cloud synchronisées
+        const historique = window.historiquePaiementsCloud || [];
+        const depenses = window.depensesCloud || [];
+        const estMensuelle = cotisFiltreRaw.includes('(Mens.)');
+        
+        let totalRecettes = 0;
+        let totalDepenses = 0;
+        let tableBodyHtml = "";
+        let tableHeaderHtml = "";
+        let tableFooterHtml = "";
+
+        if (estMensuelle) {
+            const montantCotisFixe = configData.listes.mensuelles.find(c => (c.label + " (Mens.)") === cotisFiltreRaw)?.amount || 0;
+            const nbMoisSelectionnes = (fin - debut) + 1;
+            const totalTheoriqueDuParMembre = montantCotisFixe * nbMoisSelectionnes;
+            let totalDetteGlobal = 0;
+
+            let totauxParMois = {}; 
+            for (let i = debut; i <= fin; i++) totauxParMois[i] = 0;
+            
+            tableHeaderHtml = `<tr><th style="font-size:7pt;">Membres</th>`;
+            for (let i = debut; i <= fin; i++) tableHeaderHtml += `<th class="text-center" style="font-size:7pt;">${moisNoms[i].substring(0,3)}</th>`;
+            tableHeaderHtml += `<th class="text-end" style="font-size:7pt;">Payé</th><th class="text-end" style="font-size:7pt;">Dette</th></tr>`;
+
+            const listeMembres = configData.listes?.membres || [];
+            
+            listeMembres.forEach(mNom => {
+                let ligneTotalPaye = 0;
+                let tempRow = `<tr><td style="font-size:7pt; font-weight:bold;">${mNom}</td>`;
+                
+                for (let i = debut; i <= fin; i++) {
+                    const paiement = historique.find(p => {
+                        let pAnnee, pMois;
+                        if(p.concerneAnnee && p.concerneMois) {
+                            pAnnee = String(p.concerneAnnee);
+                            pMois = moisNoms.indexOf(p.concerneMois);
+                        } else {
+                            const parts = p.date.split('-'); 
+                            pAnnee = parts[0]; 
+                            pMois = parseInt(parts[1]) - 1;
+                        }
+                        return p.membre.trim().toLowerCase() === mNom.trim().toLowerCase() && 
+                               p.cotisLabel.toLowerCase().includes(cotisFiltrePure) && 
+                               pMois === i && pAnnee === String(anneeSelectionnee);
+                    });
+
+                    const montant = paiement ? parseFloat(paiement.montant) : 0;
+                    ligneTotalPaye += montant; 
+                    totauxParMois[i] += montant;
+                    tempRow += `<td class="text-center" style="font-size:7pt;">${montant > 0 ? montant.toLocaleString('fr-FR') : '-'}</td>`;
+                }
+                
+                let dMembre = Math.max(0, totalTheoriqueDuParMembre - ligneTotalPaye);
+                totalRecettes += ligneTotalPaye;
+                totalDetteGlobal += dMembre;
+
+                tempRow += `<td class="text-end fw-bold" style="font-size:7pt; background:#f9f9f9;">${ligneTotalPaye.toLocaleString('fr-FR')}</td>`;
+                tempRow += `<td class="text-end text-danger fw-bold" style="font-size:7pt;">${dMembre.toLocaleString('fr-FR')}</td></tr>`;
+                tableBodyHtml += tempRow;
+            });
+
+            depenses.forEach(dep => {
+                const d = new Date(dep.date);
+                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                    if (dep.compte && dep.compte.toLowerCase().trim() === cotisFiltrePure) {
+                        totalDepenses += parseFloat(dep.montant);
+                        tableBodyHtml += `<tr style="background:#fff5f5;"><td colspan="${nbMoisSelectionnes + 1}" style="font-size:7pt; color:#d63031;"><em>Dépense : ${dep.motif} (${formaterDateLongue(dep.date || dep.id)})</em></td><td class="text-end text-danger" style="font-size:7pt;">- ${parseFloat(dep.montant).toLocaleString('fr-FR')}</td><td class="text-end">-</td></tr>`;
+                    }
+                }
+            });
+
+            const soldeFinal = totalRecettes - totalDepenses;
+            tableFooterHtml = `<tr style="background:#e9ecef; font-weight:bold;"><td style="font-size:7pt;">SOLDE NET RÉEL</td>`;
+            for (let i = debut; i <= fin; i++) tableFooterHtml += `<td class="text-center" style="font-size:7pt;">-</td>`;
+            tableFooterHtml += `<td class="text-end" style="font-size:7pt; color:${soldeFinal >=0 ? 'var(--wa-dark-green)' : 'red'};">${soldeFinal.toLocaleString('fr-FR')}</td>`;
+            tableFooterHtml += `<td class="text-end text-danger" style="font-size:7pt;">(Dettes: ${totalDetteGlobal.toLocaleString('fr-FR')})</td></tr>`;
+
+        } else {
+            tableHeaderHtml = `<tr><th>Date & Heure</th><th>Libellé / Bénéficiaire</th><th>Nature</th><th class="text-end">Entrée</th><th class="text-end">Sortie</th></tr>`;
+            let flux = [];
+            
+            historique.forEach(p => {
+                const d = new Date(p.timestamp || p.date);
+                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                    if (cotisFiltreRaw === 'ALL' || p.cotisLabel.toLowerCase().includes(cotisFiltrePure)) {
+                        flux.push({...p, type: 'RECETTE', sortDate: d.getTime()});
+                    }
+                }
+            });
+
+            depenses.forEach(dep => {
+                const d = new Date(dep.date);
+                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                    if (cotisFiltreRaw === 'ALL' || (dep.compte && dep.compte.toLowerCase().trim() === cotisFiltrePure)) {
+                        flux.push({...dep, type: 'DEPENSE', sortDate: d.getTime()});
+                    }
+                }
+            });
+
+            flux.sort((a, b) => a.sortDate - b.sortDate);
+
+            flux.forEach(f => {
+                const mt = parseFloat(f.montant) || 0;
+                const dateAffichage = f.horodatage || formaterDateLongue(f.timestamp || f.date || f.id);
+                if (f.type === 'RECETTE') {
+                    totalRecettes += mt;
+                    tableBodyHtml += `<tr><td style="font-size:7pt;">${dateAffichage}</td><td style="font-size:7pt;">${f.membre}</td><td style="font-size:7pt;">${f.cotisLabel}</td><td class="text-end" style="font-size:7pt;">${mt.toLocaleString('fr-FR')}</td><td class="text-end text-muted">-</td></tr>`;
+                } else {
+                    totalDepenses += mt;
+                    tableBodyHtml += `<tr><td style="font-size:7pt;">${dateAffichage}</td><td style="font-size:7pt;">${f.motif}</td><td style="font-size:7pt;">Dépense (${f.compte})</td><td class="text-end text-muted">-</td><td class="text-end text-danger" style="font-size:7pt;">${mt.toLocaleString('fr-FR')}</td></tr>`;
+                }
+            });
+
+            if (!tableBodyHtml) tableBodyHtml = '<tr><td colspan="5" class="text-center">Aucune transaction</td></tr>';
+            const solde = totalRecettes - totalDepenses;
+            tableFooterHtml = `
+                <tr style="background:#f8f9fa;"><td colspan="3" class="text-end">TOTAUX :</td><td class="text-end text-success">${totalRecettes.toLocaleString('fr-FR')}</td><td class="text-end text-danger">${totalDepenses.toLocaleString('fr-FR')}</td></tr>
+                <tr style="background:#e9ecef; font-weight:bold;"><td colspan="3" class="text-end">SOLDE NET RÉEL :</td><td colspan="2" class="text-center" style="color: ${solde >= 0 ? 'var(--wa-dark-green)' : 'red'};">${solde.toLocaleString('fr-FR')} FCFA</td></tr>`;
+        }
+
+        const aperçu = document.getElementById('rapportAperçu');
+        aperçu.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                <div style="text-align: left; font-size: 8pt;"><strong>RÉPUBLIQUE DU BÉNIN</strong><br><em>Fraternité - Justice - Travail</em><br><small>Collectif : ${famille}</small></div>
+                <div style="text-align: right; font-size: 8pt;"><strong>TRÉSORERIE GÉNÉRALE</strong><br>Généré le: ${formaterDateLongue(new Date())}<br>Période: ${moisNoms[debut]} - ${moisNoms[fin]} ${anneeSelectionnee}</div>
+            </div>
+            <div style="text-align:center; margin-bottom:15px;"><h3 style="margin:5px 0; text-transform: uppercase; color: var(--wa-dark-green); font-size:10pt;">État de Synthèse Financière</h3><p style="margin:0; font-weight: bold; font-size:8pt;">Filtre : ${cotisFiltreRaw}</p></div>
+            <table class="table table-sm table-bordered" style="width:100%; border: 1px solid black; margin-bottom:10px;"><thead style="background-color: #f2f2f2;">${tableHeaderHtml}</thead><tbody>${tableBodyHtml}</tbody><tfoot style="background-color: #eee; font-weight: bold;">${tableFooterHtml}</tfoot></table>
+            <div style="margin-top: 15px; font-size: 7pt;"><p>Certifié sincère et conforme aux écritures comptables. Toute rature annule la validité du présent document.</p></div>
+            <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                <div><p style="text-decoration: underline; font-weight: bold; font-size: 7pt; margin-bottom: 5px;">Le Trésorier</p><div style="height: 40px; display: flex; align-items: center; justify-content: center;">${signaturesBureau.tres ? `<img src="${signaturesBureau.tres}" style="max-height:40px; max-width:80px;">` : ''}</div><strong style="font-size: 7pt;">${configData.tresorier?.nom || ''}</strong></div>
+                <div><p style="text-decoration: underline; font-weight: bold; font-size: 7pt; margin-bottom: 5px;">Le Secrétaire</p><div style="height: 40px; display: flex; align-items: center; justify-content: center;">${signaturesBureau.sec ? `<img src="${signaturesBureau.sec}" style="max-height:40px; max-width:80px;">` : ''}</div><strong style="font-size: 7pt;">${configData.secretaire?.nom || ''}</strong></div>
+                <div><p style="text-decoration: underline; font-weight: bold; font-size: 7pt; margin-bottom: 5px;">Le Président</p><div style="height: 40px; display: flex; align-items: center; justify-content: center;">${signaturesBureau.pres ? `<img src="${signaturesBureau.pres}" style="max-height:40px; max-width:80px;">` : ''}</div><strong style="font-size: 7pt;">${configData.president?.nom || ''}</strong></div>
+            </div>`;
+    }
+
+    function archiverRapport() {
+        const zone = document.getElementById('rapportAperçu');
+        if(zone.innerHTML.includes('aperçu')) { alert("Générez d'abord l'aperçu."); return; }
+        html2canvas(zone, { scale: 2 }).then(canvas => {
+            const dataImg = canvas.toDataURL();
+            const titre = "Rapport " + document.getElementById('rapportCotis').value + " " + document.getElementById('rapportAnnee').value;
+            const nouveauDoc = { id: Date.now(), date: formaterDateLongue(new Date()), titre: titre, image: dataImg };
+            let archives = JSON.parse(localStorage.getItem('archivesDocuments') || "[]");
+            archives.unshift(nouveauDoc);
+            localStorage.setItem('archivesDocuments', JSON.stringify(archives));
+            alert("Rapport archivé avec succès !");
+            renderListeArchivée();
+            bootstrap.Modal.getInstance(document.getElementById('modalRapport')).hide();
+        });
+    }
+
+    function renderListeArchivée() {
+        const archives = JSON.parse(localStorage.getItem('archivesDocuments') || "[]");
+        const zone = document.getElementById('zoneDocuments');
+        if(archives.length === 0) {
+            zone.innerHTML = '<div class="empty-state"><i class="fas fa-file-pdf"></i><p>Aucun document disponible.</p></div>';
+            return;
+        }
+        zone.innerHTML = archives.map(doc => `
+            <div class="doc-item">
+                <div class="doc-info">
+                    <strong>${doc.titre}</strong><br>
+                    <small class="text-muted">Archivé le ${doc.date}</small>
+                </div>
+                <div class="doc-actions">
+                    <i class="fas fa-eye text-success" onclick="voirDoc(${doc.id})" title="Voir"></i>
+                    <i class="fas fa-trash-alt text-danger" onclick="supprimerDoc(${doc.id})" title="Supprimer"></i>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function voirDoc(id) {
+        const archives = JSON.parse(localStorage.getItem('archivesDocuments') || "[]");
+        const doc = archives.find(d => d.id === id);
+        if(doc) {
+            document.getElementById('imgViewFull').src = doc.image;
+            new bootstrap.Modal(document.getElementById('modalViewDoc')).show();
+        }
+    }
+
+    function supprimerDoc(id) {
+        if(confirm("Voulez-vous vraiment supprimer ce document des archives ?")) {
+            let archives = JSON.parse(localStorage.getItem('archivesDocuments') || "[]");
+            archives = archives.filter(d => d.id !== id);
+            localStorage.setItem('archivesDocuments', JSON.stringify(archives));
+            renderListeArchivée();
+        }
+    }
+
+    function ajouterAnneeManuelle() {
+        const nouvelleAnnee = prompt("Entrez l'année (ex: 2027) :");
+        if (nouvelleAnnee && !isNaN(nouvelleAnnee)) {
+            const select = document.getElementById('rapportAnnee');
+            const option = document.createElement('option'); option.value = nouvelleAnnee; option.text = nouvelleAnnee;
+            select.add(option); select.value = nouvelleAnnee;
+        }
+    }
+
+    function imprimerPro() {
+        if(document.getElementById('rapportAperçu').innerHTML.includes('aperçu')) { alert("Générez d'abord l'aperçu."); return; }
+        window.print();
+    }
+
+    function exporterPNG() {
+        const zone = document.getElementById('rapportAperçu');
+        if(zone.innerHTML.includes('aperçu')) { alert("Générez d'abord l'aperçu."); return; }
+        html2canvas(zone, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a'); link.download = `Rapport_${Date.now()}.png`;
+            link.href = canvas.toDataURL(); link.click();
+        });
+    }
+</script>
+</body>
+</html>

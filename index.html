@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Trésorerie Familiale</title>
+    <meta name="theme-color" content="#075E54">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            flex: 1;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--wa-teal);
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--wa-dark-green);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .menu-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px 15px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            border: 1px solid #eee;
+        }
+
+        .menu-item:active { transform: scale(0.95); }
+        .menu-item i {
+            font-size: 2rem;
+            color: var(--wa-teal);
+            margin-bottom: 10px;
+            display: block;
+        }
+        .menu-item span { font-weight: 600; display: block; }
+
+        #installBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: var(--wa-light-green);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        #status-indicator {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            z-index: 1050;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .online { background: #25D366; color: white; }
+        .offline { background: #dc3545; color: white; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+
+        .recent-activity {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 0.85rem;
+        }
+
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .scroll-container {
+            display: none;
+            overflow-x: auto;
+            white-space: nowrap;
+            gap: 15px;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+        .scroll-container::-webkit-scrollbar { display: none; }
+
+        .receipt-card {
+            display: inline-block;
+            background: white;
+            min-width: 150px;
+            padding: 15px;
+            border-radius: 12px;
+            border-bottom: 4px solid var(--wa-light-green);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-right: 10px;
+            vertical-align: top;
+        }
+        .receipt-card .title { font-size: 0.75rem; color: #777; text-transform: uppercase; white-space: normal; }
+        .receipt-card .val { font-size: 1.1rem; font-weight: bold; color: var(--wa-teal); }
+        
+        .btn-toggle-receipts {
+            background: none;
+            border: 1px solid var(--wa-teal);
+            color: var(--wa-teal);
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        footer {
+            background: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+        footer b { color: var(--wa-dark-green); }
+    </style>
+</head>
+<body onload="initDashboard()">
+
+<div id="status-indicator" class="offline">
+    <i class="fas fa-circle"></i> <span id="status-text">Initialisation...</span>
+</div>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center" href="#">
+        <i class="fas fa-university me-2"></i>
+        <div>
+            <h1 id="headerFamilyName" style="font-size: 1.1rem; margin:0; line-height: 1;">Famille AMOUSSOU</h1>
+            <small id="headerTresorierName" style="font-size: 0.75rem; opacity: 0.9; font-weight: normal;"></small>
+        </div>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto text-white small">
+            <li class="nav-item"><a class="nav-link active" href="index.html">Tableau de bord</a></li>
+            <li class="nav-item"><a class="nav-link" href="paiements.html">Paiements</a></li>
+            <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+            <li class="nav-item"><a class="nav-link" href="config.html">Paramètres</a></li>
+        </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="mb-4 mt-2">
+        <h4 class="fw-bold">Bonjour, <span id="welcomeName">Trésorier</span> 👋</h4>
+        <p class="text-muted small">Voici l'état actuel de la caisse familiale.</p>
+    </div>
+
+    <div class="stat-card">
+        <div class="row text-center">
+            <div class="col-6 border-end">
+                <div class="stat-label">Total Caisse</div>
+                <div class="stat-val" id="totalCaisse">0</div>
+                <div class="small text-muted">FCFA</div>
+            </div>
+            <div class="col-6">
+                <div class="stat-label">Membres</div>
+                <div class="stat-val" id="totalMembres">0</div>
+                <div class="small text-muted">Inscrits</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold m-0">Détails des Recettes</h6>
+        <button class="btn-toggle-receipts" id="btnToggleReceipts" onclick="toggleReceipts()">Afficher</button>
+    </div>
+    <div class="scroll-container" id="receiptsScroll"></div>
+
+    <div class="menu-grid">
+        <a href="paiements.html" class="menu-item">
+            <i class="fas fa-hand-holding-usd"></i>
+            <span>Paiements</span>
+        </a>
+        <a href="comptabilite.html" class="menu-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Comptabilité</span>
+        </a>
+        <a href="documents.html" class="menu-item">
+            <i class="fas fa-file-pdf"></i>
+            <span>Documents</span>
+        </a>
+        <a href="messages.html" class="menu-item">
+            <i class="fab fa-whatsapp"></i>
+            <span>Relances</span>
+        </a>
+        <a href="config.html" class="menu-item">
+            <i class="fas fa-cogs"></i>
+            <span>Paramètres</span>
+        </a>
+        <div class="menu-item text-danger">
+            <i class="fas fa-arrow-circle-up text-danger"></i>
+            <span id="labelTotalDepenses">Dépenses</span>
+            <small class="fw-bold" id="valTotalDepenses">0 FCFA</small>
+        </div>
+    </div>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold">Activités Récentes</h6>
+        <a href="comptabilite.html" class="text-decoration-none small text-success">Voir tout</a>
+    </div>
+    <div class="recent-activity shadow-sm" id="recentList">
+        <div class="text-center text-muted py-3">Chargement des flux...</div>
+    </div>
+</div>
+
+<footer>
+    <div>Conçu par <b>Atizoun Plateny AMOUSSOU AHOLOU</b></div>
+    <div>Email : atizoun@gmail.com | Tél : 01 97 74 40 35</div>
+</footer>
+
+<button id="installBtn">
+    <i class="fas fa-download"></i> Installer l'App
+</button>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+        authDomain: "smartfam-a0e79.firebaseapp.com",
+        databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "smartfam-a0e79",
+        storageBucket: "smartfam-a0e79.firebasestorage.app",
+        messagingSenderId: "800136496795",
+        appId: "1:800136496795:web:c30cc46068e7103925283e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 1. Détection Statut Connexion
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+        const indicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        if (snap.val() === true) {
+            indicator.className = "online";
+            statusText.innerText = "En ligne";
+        } else {
+            indicator.className = "offline";
+            statusText.innerText = "Hors ligne";
+        }
+    });
+
+    // 2. Synchronisation en temps réel de toutes les données
+    onValue(ref(db, '/'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Mise à jour du cache Local Storage pour usage hors ligne
+            if (data.configTresorerie) localStorage.setItem('configTresorerie', JSON.stringify(data.configTresorerie));
+            
+            // Conversion de l'objet paiements Firebase en tableau compatible
+            const listPaiements = data.paiements ? Object.values(data.paiements) : [];
+            localStorage.setItem('historiquePaiements', JSON.stringify(listPaiements));
+
+            const listDepenses = data.depenses ? Object.values(data.depenses) : [];
+            localStorage.setItem('historiqueDepenses', JSON.stringify(listDepenses));
+
+            // Relancer le rendu du Dashboard
+            window.initDashboard();
+        }
+    });
+</script>
+
+<script>
+    function toggleReceipts() {
+        const container = document.getElementById('receiptsScroll');
+        const btn = document.getElementById('btnToggleReceipts');
+        if (container.style.display === "none" || container.style.display === "") {
+            container.style.display = "flex";
+            btn.innerText = "Masquer";
+        } else {
+            container.style.display = "none";
+            btn.innerText = "Afficher";
+        }
+    }
+
+    function cleanLabel(str) {
+        if(!str) return "";
+        return str.replace("(Mens.)", "").replace("(Spéc.)", "").trim().toLowerCase();
+    }
+
+    function initDashboard() {
+        // Chargement des données (priorité au LocalStorage mis à jour par Firebase)
+        const config = JSON.parse(localStorage.getItem('configTresorerie') || "{}");
+        const historique = JSON.parse(localStorage.getItem('historiquePaiements') || "[]");
+        const depenses = JSON.parse(localStorage.getItem('historiqueDepenses') || "[]");
+
+        // Affichage En-tête
+        if(config.nom) {
+            document.getElementById('headerFamilyName').innerText = config.nom;
+        }
+        if(config.tresorier && config.tresorier.nom) {
+            document.getElementById('headerTresorierName').innerText = "Trésorier : " + config.tresorier.nom;
+            document.getElementById('welcomeName').innerText = config.tresorier.nom;
+        }
+
+        // Calculs Financiers
+        const totalRecettes = historique.reduce((sum, p) => sum + (parseFloat(p.montant) || 0), 0);
+        const totalSorties = depenses.reduce((sum, d) => sum + (parseFloat(d.montant) || 0), 0);
+        const solde = totalRecettes - totalSorties;
+
+        document.getElementById('totalCaisse').innerText = solde.toLocaleString('fr-FR');
+        document.getElementById('totalMembres').innerText = config.listes?.membres?.length || 0;
+        document.getElementById('valTotalDepenses').innerText = totalSorties.toLocaleString('fr-FR') + " FCFA";
+
+        // Rendu des Cartes de Recettes (Détails)
+        const receiptsScroll = document.getElementById('receiptsScroll');
+        let receiptsHTML = "";
+        if(config.listes) {
+            const typesMens = (config.listes.mensuelles || []).map(t => ({label: t.label + " (Mens.)"}));
+            const typesSpec = (config.listes.speciales || []).map(t => ({label: t.label + " (Spéc.)"}));
+            const tousTypes = [...typesMens, ...typesSpec];
+
+            tousTypes.forEach(type => {
+                const totalType = historique
+                    .filter(p => cleanLabel(p.cotisLabel) === cleanLabel(type.label))
+                    .reduce((sum, p) => sum + (parseFloat(p.montant) || 0), 0);
+                
+                receiptsHTML += `
+                    <div class="receipt-card">
+                        <div class="title">${type.label}</div>
+                        <div class="val">${totalType.toLocaleString('fr-FR')} <small style="font-size:0.6rem">FCFA</small></div>
+                    </div>
+                `;
+            });
+            receiptsScroll.innerHTML = receiptsHTML || '<div class="text-muted small">Aucun paramétrage trouvé.</div>';
+        }
+
+        // Flux d'activités récentes (mélange paiements et dépenses)
+        const recentList = document.getElementById('recentList');
+        const allFlux = [
+            ...historique.map(p => ({...p, fluxType: 'IN', ts: p.id || p.horodatage})),
+            ...depenses.map(d => ({...d, fluxType: 'OUT', ts: d.id || d.horodatage}))
+        ].sort((a,b) => {
+            // Tri par date décroissante (si présent)
+            return (b.ts > a.ts) ? 1 : -1;
+        }).slice(0, 5);
+
+        if(allFlux.length > 0) {
+            recentList.innerHTML = allFlux.map(f => `
+                <div class="activity-item">
+                    <span>
+                        <i class="fas ${f.fluxType === 'IN' ? 'fa-arrow-down text-success' : 'fa-arrow-up text-danger'} me-2"></i>
+                        ${f.fluxType === 'IN' ? f.membre : (f.motif || 'Dépense')}
+                    </span>
+                    <span class="fw-bold ${f.fluxType === 'IN' ? 'text-success' : 'text-danger'}">
+                        ${f.fluxType === 'IN' ? '+' : '-'}${parseFloat(f.montant).toLocaleString('fr-FR')}
+                    </span>
+                </div>
+            `).join('');
+        } else {
+            recentList.innerHTML = '<div class="text-center text-muted py-3">Aucune activité enregistrée.</div>';
+        }
+    }
+
+    // --- PWA LOGIC ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+    });
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW failed', err));
+        });
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "name": "Trésorerie Familiale",
+  "short_name": "TresoFam",
+  "description": "Application de gestion de trésorerie pour famille - Gérez cotisations, dépenses et communications",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#075E54",
+  "theme_color": "#075E54",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logoapp.png",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 256x256 384x384 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/1080x1920/075E54/FFFFFF?text=Trésorerie+Familiale",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vue d'ensemble de l'application"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouveau Paiement",
+      "short_name": "Paiement",
+      "description": "Enregistrer un paiement rapidement",
+      "url": "/paiements.html",
+      "icons": [{ "src": "/logoapp.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Comptabilité",
+      "short_name": "Compta",
+      "description": "Voir la situation comptable",
+      "url": "/comptabilite.html",
+      "icons": [{ "src": "/logoapp.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Messages",
+      "short_name": "WhatsApp",
+      "description": "Générer des messages",
+      "url": "/messages.html",
+      "icons": [{ "src": "/logoapp.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["finance", "family", "productivity"],
+  "lang": "fr-FR",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "display_override": ["standalone", "fullscreen", "minimal-ui"]
+}

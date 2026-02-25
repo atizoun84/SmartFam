@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comptabilité - Trésorerie Familiale</title>
+    
+    <meta name="theme-color" content="#075E54">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+
+        /* Status Badge */
+        #connectionStatus {
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .config-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-card h2 {
+            color: var(--wa-teal);
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-box {
+            text-align: center;
+            padding: 15px;
+            background: var(--wa-bg);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .total-amount {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--wa-dark-green);
+        }
+
+        .table-responsive {
+            font-size: 0.85rem;
+        }
+
+        .table thead {
+            background-color: var(--wa-bg);
+        }
+        
+        .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid white;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .member-summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            border-left: 4px solid var(--wa-teal);
+        }
+
+        .btn-depense {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-wa-share {
+            background-color: var(--wa-light-green);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .btn-copy-wa {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background-color: var(--wa-dark-green);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .btn-toggle {
+            background: none;
+            border: none;
+            color: var(--wa-teal);
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #soldeAfficheDepense {
+            font-weight: bold;
+            color: var(--wa-teal);
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .btn-delete-depense {
+            color: #dc3545;
+            background: none;
+            border: none;
+            padding: 0 5px;
+            cursor: pointer;
+        }
+
+        .solde-badge {
+            background: #e9f5f2;
+            border: 1px solid #c3e6cb;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .solde-badge span:first-child {
+            font-size: 0.85rem;
+            color: #555;
+            font-weight: 500;
+        }
+        .solde-badge span:last-child {
+            font-weight: bold;
+            color: var(--wa-teal);
+        }
+
+        footer {
+            background-color: var(--wa-dark-green);
+            color: white;
+            text-align: center;
+            padding: 20px 10px;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            border-radius: 20px 20px 0 0;
+        }
+    </style>
+</head>
+<body onload="chargerComptabilite()">
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><h1 id="headerFamilyName">Famille AMOUSSOU</h1></a>
+    <div id="connectionStatus" class="offline">Chargement...</div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+        <li class="nav-item"><a class="nav-link" href="paiements.html">Paiements</a></li>
+        <li class="nav-item"><a class="nav-link active" href="comptabilite.html">Comptabilité</a></li>
+        <li class="nav-item"><a class="nav-link" href="messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link" href="documents.html">Documents</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <button class="btn-depense" data-bs-toggle="modal" data-bs-target="#modalDepense">
+        <i class="fas fa-minus-circle me-2"></i> ENREGISTRER UNE DÉPENSE
+    </button>
+
+    <div class="config-card">
+        <h2><i class="fas fa-wallet me-2"></i> Solde de la Caisse</h2>
+        <div class="total-box">
+            <div class="total-amount" id="soldeGlobal">0 FCFA</div>
+            <small class="text-muted">Recettes totales - Dépenses totales</small>
+        </div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-tags me-2"></i> Plaquettes de Solde</h2>
+        <div id="plaquettesContainer"></div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-chart-pie me-2"></i> Tableau de Synthèse</h2>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th class="text-end">Solde</th>
+                    </tr>
+                </thead>
+                <tbody id="bilanCotis"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-user-check me-2"></i> Point par Membre</h2>
+        <select id="selectMembreBilan" onchange="afficherDetailsMembre()">
+            <option value="">Choisir un membre...</option>
+        </select>
+        
+        <div id="detailMembreSection" style="display: none;">
+            <div class="member-summary mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Cumul Versé :</span>
+                    <strong id="membreTotalCumul" class="text-success">0 FCFA</strong>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type / Période</th>
+                            <th class="text-end">Montant</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpsDetailMembre"></tbody>
+                </table>
+            </div>
+
+            <div class="d-grid gap-1">
+                <button class="btn-wa-share" onclick="partagerMembreWhatsApp()">
+                    <i class="fab fa-whatsapp me-2"></i> ENVOYER VERS WHATSAPP
+                </button>
+                <button class="btn-copy-wa" onclick="copierMembreWhatsApp()">
+                    <i class="fas fa-copy me-2"></i> COPIER POUR WHATSAPP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-history me-2"></i> Historique Dépenses
+            <button class="btn-toggle" onclick="toggleVisibility('histDepenses')">Afficher</button>
+        </h2>
+        <div id="histDepenses" class="table-responsive mt-2" style="display:none;">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Motif</th>
+                        <th class="text-end">Montant</th>
+                        <th class="text-center"><i class="fas fa-tools"></i></th>
+                    </tr>
+                </thead>
+                <tbody id="bodyHistDepenses"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p class="mb-1"><strong>Concepteur :</strong> Atizoun Plateny AMOUSSOU AHOLOU</p>
+        <p class="mb-1"><i class="fas fa-envelope me-1"></i> atizoun@gmail.com | <i class="fas fa-phone-alt me-1"></i> 01 97 74 40 35</p>
+        <p class="mb-0">&copy; 2026 - Trésorerie Familiale</p>
+    </div>
+</footer>
+
+<div class="modal fade" id="modalDepense" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nouvelle Sortie de Caisse</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label>Compte à débiter</label>
+                <select id="depenseCompte" onchange="majSoldeCompteDepense()">
+                    <option value="">Choisir un compte...</option>
+                </select>
+                <span id="soldeAfficheDepense">Solde disponible : 0 FCFA</span>
+                
+                <label>Bénéficiaire (Membre)</label>
+                <select id="depenseBeneficiaire"></select>
+                
+                <label>Motif de la dépense</label>
+                <input type="text" id="depenseMotif" placeholder="Ex: Soutien décès...">
+                
+                <label>Montant (FCFA)</label>
+                <input type="number" id="depenseMontant" placeholder="0">
+                
+                <label>Date</label>
+                <input type="date" id="depenseDate">
+                
+                <button class="btn-depense mt-3" onclick="validerDepense()">
+                    <i class="fas fa-check-circle me-2"></i> CONFIRMER LA DÉPENSE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+    authDomain: "smartfam-a0e79.firebaseapp.com",
+    databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "smartfam-a0e79",
+    storageBucket: "smartfam-a0e79.firebasestorage.app",
+    messagingSenderId: "800136496795",
+    appId: "1:800136496795:web:c30cc46068e7103925283e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const paiementsRef = ref(db, 'paiements');
+  const depensesRef = ref(db, 'depenses');
+  const configRef = ref(db, 'configTresorerie');
+
+  // --- Gestion du Statut de Connexion (Correction Notification) ---
+  const connectedRef = ref(db, ".info/connected");
+  onValue(connectedRef, (snap) => {
+    const statusDiv = document.getElementById('connectionStatus');
+    if (snap.val() === true) {
+      statusDiv.innerText = "En ligne";
+      statusDiv.className = "online";
+    } else {
+      statusDiv.innerText = "Hors ligne";
+      statusDiv.className = "offline";
+    }
+  });
+
+  // --- Synchronisation de la Configuration ---
+  onValue(configRef, (snapshot) => {
+      const data = snapshot.val();
+      if(data) {
+          localStorage.setItem('configTresorerie', JSON.stringify(data));
+          window.chargerComptabilite(); // Rafraîchir l'interface avec les nouvelles listes
+      }
+  });
+
+  // --- Chargement des données synchronisées (Correction Soldes à 0) ---
+  onValue(paiementsRef, (snapshot) => {
+    const data = snapshot.val();
+    window.historiqueGlobal = data ? Object.keys(data).map(k => ({firebaseId: k, ...data[k]})) : [];
+    window.calculerBilans();
+    window.afficherDetailsMembre();
+  });
+
+  onValue(depensesRef, (snapshot) => {
+    const data = snapshot.val();
+    window.depensesGlobal = data ? Object.keys(data).map(k => ({firebaseId: k, ...data[k]})) : [];
+    window.calculerBilans();
+    window.renderHistoriqueDepenses();
+  });
+
+  // Fonctions globales de modification Firebase
+  window.validerDepense = function() {
+    const compteFull = document.getElementById('depenseCompte').value;
+    const benef = document.getElementById('depenseBeneficiaire').value;
+    const motif = document.getElementById('depenseMotif').value;
+    const montant = parseFloat(document.getElementById('depenseMontant').value);
+    const date = document.getElementById('depenseDate').value;
+
+    if(!compteFull || !benef || !motif || isNaN(montant) || !date) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+    }
+
+    const labelNettoye = compteFull.replace(" (Mens.)", "").replace(" (Spéc.)", "").trim();
+    const soldeActuel = window.soldesComptes[labelNettoye] || 0;
+
+    if (montant > soldeActuel) {
+        alert("Erreur : Le montant dépasse le solde disponible.");
+        return;
+    }
+
+    const code = prompt("Code de sécurité :");
+    if(code === "11984") {
+        const nouvelleDepense = { compte: labelNettoye, benef, motif, montant, date, timestamp: Date.now() };
+        push(depensesRef, nouvelleDepense).then(() => {
+            document.getElementById('depenseMotif').value = "";
+            document.getElementById('depenseMontant').value = "";
+            bootstrap.Modal.getInstance(document.getElementById('modalDepense')).hide();
+            alert("Dépense enregistrée et synchronisée !");
+        });
+    } else if(code !== null) alert("Code incorrect !");
+  };
+
+  window.supprimerDepense = function(firebaseId) {
+    const code = prompt("Code de sécurité pour supprimer :");
+    if(code === "11984") {
+        remove(ref(db, `depenses/${firebaseId}`)).then(() => alert("Dépense supprimée !"));
+    } else if(code !== null) alert("Code incorrect !");
+  };
+</script>
+
+<script>
+    window.historiqueGlobal = [];
+    window.depensesGlobal = [];
+    window.membresGlobal = [];
+    window.soldesComptes = {}; 
+    let bureau = { nomFamille: "FAMILLE AHOLOU", president: "", secretaire: "", tresorier: "" };
+
+    function toggleVisibility(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function chargerComptabilite() {
+        const configSaved = localStorage.getItem('configTresorerie');
+        if(configSaved) {
+            const configData = JSON.parse(configSaved);
+            bureau.nomFamille = configData.nom || "FAMILLE AHOLOU";
+            bureau.president = configData.president ? configData.president.nom : "";
+            bureau.secretaire = configData.secretaire ? configData.secretaire.nom : "";
+            bureau.tresorier = configData.tresorier ? configData.tresorier.nom : "Trésorier";
+
+            document.getElementById('headerFamilyName').innerText = bureau.nomFamille;
+            window.membresGlobal = configData.listes.membres || [];
+            
+            const selectBilan = document.getElementById('selectMembreBilan');
+            const selectBenef = document.getElementById('depenseBeneficiaire');
+            const selectCompte = document.getElementById('depenseCompte');
+            
+            // On garde la valeur sélectionnée pour ne pas perdre le focus si sync Firebase
+            const currentMembre = selectBilan.value;
+            const currentCompte = selectCompte.value;
+
+            selectBenef.innerHTML = '<option value="">Choisir...</option>';
+            selectBilan.innerHTML = '<option value="">Choisir un membre...</option>';
+            window.membresGlobal.forEach(m => {
+                selectBilan.innerHTML += `<option value="${m}">${m}</option>`;
+                selectBenef.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+
+            selectCompte.innerHTML = '<option value="">Choisir un compte...</option>';
+            configData.listes.mensuelles.forEach(c => selectCompte.innerHTML += `<option value="${c.label}">${c.label}</option>`);
+            configData.listes.speciales.forEach(c => selectCompte.innerHTML += `<option value="${c.label}">${c.label}</option>`);
+            
+            selectBilan.value = currentMembre;
+            selectCompte.value = currentCompte;
+        }
+        document.getElementById('depenseDate').valueAsDate = new Date();
+    }
+
+    window.calculerBilans = function() {
+        let recettesParCotis = {};
+        let depensesParCotis = {};
+        let totalRecettes = 0;
+        let totalDepenses = 0;
+        window.soldesComptes = {}; 
+
+        window.historiqueGlobal.forEach(p => {
+            const m = parseFloat(p.montant) || 0;
+            totalRecettes += m;
+            let label = p.cotisLabel.replace(" (Mens.)", "").replace(" (Spéc.)", "").trim();
+            recettesParCotis[label] = (recettesParCotis[label] || 0) + m;
+        });
+
+        window.depensesGlobal.forEach(d => {
+            const m = parseFloat(d.montant) || 0;
+            totalDepenses += m;
+            let label = d.compte.trim();
+            depensesParCotis[label] = (depensesParCotis[label] || 0) + m;
+        });
+
+        document.getElementById('soldeGlobal').innerText = (totalRecettes - totalDepenses).toLocaleString('fr-FR') + " FCFA";
+
+        const tbodyCotis = document.getElementById('bilanCotis');
+        const plaquettesContainer = document.getElementById('plaquettesContainer');
+        const tousLesLabels = [...new Set([...Object.keys(recettesParCotis), ...Object.keys(depensesParCotis)])];
+        
+        let rowsHtml = "";
+        let badgesHtml = "";
+
+        tousLesLabels.forEach(label => {
+            const solde = (recettesParCotis[label] || 0) - (depensesParCotis[label] || 0);
+            window.soldesComptes[label] = solde;
+            const formatSolde = solde.toLocaleString('fr-FR') + " FCFA";
+            
+            rowsHtml += `<tr><td>${label}</td><td class="text-end fw-bold">${formatSolde}</td></tr>`;
+            badgesHtml += `
+                <div class="solde-badge">
+                    <span>${label}</span>
+                    <span>${formatSolde}</span>
+                </div>`;
+        });
+
+        tbodyCotis.innerHTML = rowsHtml || '<tr><td colspan="2" class="text-center">Aucune donnée</td></tr>';
+        plaquettesContainer.innerHTML = badgesHtml || '<p class="text-center text-muted">Aucune cotisation enregistrée.</p>';
+    }
+
+    function majSoldeCompteDepense() {
+        const sel = document.getElementById('depenseCompte');
+        const labelFull = sel.value; 
+        if(!labelFull) {
+            document.getElementById('soldeAfficheDepense').innerText = "Solde disponible : 0 FCFA";
+            return;
+        }
+        const labelNettoye = labelFull.replace(" (Mens.)", "").replace(" (Spéc.)", "").trim();
+        const solde = window.soldesComptes[labelNettoye] || 0;
+        document.getElementById('soldeAfficheDepense').innerText = "Solde disponible : " + solde.toLocaleString('fr-FR') + " FCFA";
+    }
+
+    window.renderHistoriqueDepenses = function() {
+        const body = document.getElementById('bodyHistDepenses');
+        const trie = [...window.depensesGlobal].reverse();
+        body.innerHTML = trie.map(d => `
+            <tr>
+                <td><small>${d.date}</small></td>
+                <td>${d.motif}<br><small class="text-muted">Bénéf: ${d.benef} (${d.compte})</small></td>
+                <td class="text-end text-danger fw-bold">-${parseFloat(d.montant).toLocaleString('fr-FR')} FCFA</td>
+                <td class="text-center">
+                    <button class="btn-delete-depense" onclick="supprimerDepense('${d.firebaseId}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center">Aucune dépense</td></tr>';
+    }
+
+    window.afficherDetailsMembre = function() {
+        const selectionRaw = document.getElementById('selectMembreBilan').value;
+        const section = document.getElementById('detailMembreSection');
+        const corpsTable = document.getElementById('corpsDetailMembre');
+        const cumulAffichage = document.getElementById('membreTotalCumul');
+
+        if (!selectionRaw) {
+            section.style.display = "none";
+            return;
+        }
+
+        const membreCible = selectionRaw.trim().toLowerCase();
+        section.style.display = "block";
+        let totalMembre = 0;
+        let htmlResultat = "";
+
+        const paiementsMembre = window.historiqueGlobal.filter(p => 
+            p.membre.trim().toLowerCase() === membreCible
+        );
+
+        if (paiementsMembre.length > 0) {
+            const trie = [...paiementsMembre].reverse();
+            trie.forEach(p => {
+                const m = parseFloat(p.montant) || 0;
+                totalMembre += m;
+                let labelNet = p.cotisLabel.replace(" (Mens.)", "").replace(" (Spéc.)", "").trim();
+                let periodeStr = p.concerneMois ? `${p.concerneMois} ${p.concerneAnnee}` : p.date;
+                htmlResultat += `
+                    <tr>
+                        <td><strong>${labelNet}</strong><br><small class="text-muted">Période : ${periodeStr}</small></td>
+                        <td class="text-end fw-bold">${m.toLocaleString('fr-FR')} FCFA</td>
+                    </tr>`;
+            });
+        } else {
+            htmlResultat = '<tr><td colspan="2" class="text-center">Aucun versement trouvé</td></tr>';
+        }
+        cumulAffichage.innerText = totalMembre.toLocaleString('fr-FR') + " FCFA";
+        corpsTable.innerHTML = htmlResultat;
+    }
+
+    function genererMessageMembre() {
+        const selectionRaw = document.getElementById('selectMembreBilan').value;
+        if (!selectionRaw) return "";
+        const membreCible = selectionRaw.trim();
+        const paiements = window.historiqueGlobal.filter(p => p.membre.trim() === membreCible);
+        let total = 0;
+        let listePaiements = "";
+        paiements.forEach(p => {
+            const m = parseFloat(p.montant) || 0;
+            total += m;
+            let label = p.cotisLabel.replace(" (Mens.)", "").replace(" (Spéc.)", "").trim();
+            let dateDetails = p.concerneMois ? `${p.concerneMois} ${p.concerneAnnee}` : p.date;
+            listePaiements += `✅ ${label} (${dateDetails}) : ${m.toLocaleString('fr-FR')} FCFA\n`;
+        });
+        const dateJour = new Date().toLocaleDateString('fr-FR');
+        return `--------------------------------------\n🏛️ *${bureau.nomFamille.toUpperCase()}*\n_Bureau Exécutif Familial_\n--------------------------------------\n\n*📊 SITUATION DE COTISATION*\n👤 Membre : *${membreCible}*\n📅 État au : ${dateJour}\n\n*Détails des versements :*\n${listePaiements || "_Aucun versement enregistré._"}\n\n💰 *MONTANT TOTAL VERSÉ : ${total.toLocaleString('fr-FR')} FCFA*\n\n_Merci pour votre contribution._\n\nFait le ${dateJour}\n\n✍️ *${bureau.tresorier}*\nTrésorier Général`;
+    }
+
+    window.partagerMembreWhatsApp = function() {
+        const msg = genererMessageMembre();
+        if(msg) window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    window.copierMembreWhatsApp = function() {
+        const msg = genererMessageMembre();
+        if(msg) navigator.clipboard.writeText(msg).then(() => alert("Copié !"));
+    }
+</script>
+</body>
+</html>

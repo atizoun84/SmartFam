@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Trésorerie Familiale</title>
+    <meta name="theme-color" content="#075E54">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/075E54/FFFFFF?text=TF">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --wa-dark-green: #075E54;
+            --wa-teal: #128C7E;
+            --wa-light-green: #25D366;
+            --wa-bg: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ece5dd 0%, #ffffff 100%);
+            margin: 0;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--wa-dark-green) !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand, .nav-link, .navbar-toggler-icon {
+            color: white !important;
+        }
+
+        /* Badge Statut */
+        #connectionStatus {
+            font-size: 0.75rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+            display: inline-block;
+        }
+        .online { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .offline { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .config-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .config-card h2 {
+            color: var(--wa-teal);
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        select, textarea, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            height: 150px;
+            font-size: 0.9rem;
+            resize: none;
+        }
+
+        .btn-whatsapp {
+            background-color: var(--wa-light-green);
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .btn-whatsapp:hover {
+            background-color: #1ebc5a;
+            color: white;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid white;
+        }
+
+        .template-badge {
+            cursor: pointer;
+            background: var(--wa-bg);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+            display: inline-block;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            transition: 0.3s;
+        }
+
+        .template-badge:hover {
+            background: var(--wa-teal);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .modal-content { border-radius: 15px; border: none; }
+        .modal-header { background: var(--wa-dark-green); color: white; border-radius: 15px 15px 0 0; }
+        .preview-box {
+            background: #e5ddd5;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+        }
+        .btn-copy { background: #6c757d; color: white; border-radius: 25px; }
+
+        footer {
+            background-color: var(--wa-dark-green);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            margin-top: 30px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body onload="chargerMessages()">
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><h1 id="headerFamilyName">Famille AMOUSSOU</h1></a>
+    <div id="connectionStatus" class="offline">Connexion...</div>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="config.html">Configuration</a></li>
+        <li class="nav-item"><a class="nav-link" href="paiements.html">Paiements</a></li>
+        <li class="nav-item"><a class="nav-link" href="comptabilite.html">Comptabilité</a></li>
+        <li class="nav-item"><a class="nav-link active" href="messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link" href="documents.html">Documents</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="config-card">
+        <h2><i class="fas fa-magic me-2"></i> Outils de Communication</h2>
+        
+        <label>1. Type de Cotisation</label>
+        <select id="msgTypeCotisation" onchange="gererTypeCotisation()">
+            <option value="" disabled selected>Choisir un type...</option>
+            <option value="Toutes les cotisations">Toutes les cotisations</option>
+        </select>
+
+        <div id="dateDelaiContainer" style="display: none;">
+            <label><i class="fas fa-clock text-danger me-1"></i> Date Dernier Délai</label>
+            <input type="date" id="dateDernierDelai" onchange="sauvegarderDeadline()">
+        </div>
+
+        <label>2. Période (Mois/Année)</label>
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <select id="filterMois" disabled onchange="activerDestinataire()">
+                    <option value="Tous">Tous les mois</option>
+                    <option value="01">Janvier</option><option value="02">Février</option>
+                    <option value="03">Mars</option><option value="04">Avril</option>
+                    <option value="05">Mai</option><option value="06">Juin</option>
+                    <option value="07">Juillet</option><option value="08">Août</option>
+                    <option value="09">Septembre</option><option value="10">Octobre</option>
+                    <option value="11">Novembre</option><option value="12">Décembre</option>
+                </select>
+            </div>
+            <div class="col-6">
+                <select id="filterAnnee" disabled onchange="activerDestinataire()">
+                    </select>
+            </div>
+        </div>
+
+        <label>3. Destinataire (Membre)</label>
+        <select id="msgDestinataire" disabled>
+            <option value="Tous les membres">Tous les membres (Groupe)</option>
+        </select>
+
+        <label>4. Choisir un rapport à générer</label>
+        <div class="d-flex flex-wrap">
+            <div class="template-badge" onclick="genererEtAfficher('souscription_cours')"><i class="fas fa-spinner me-1"></i> Point Souscription (En cours)</div>
+            <div class="template-badge" onclick="genererEtAfficher('souscription_final')"><i class="fas fa-flag-checkered me-1"></i> Point Souscription (Final)</div>
+            <div class="template-badge" onclick="genererEtAfficher('rappel')"><i class="fas fa-bell me-1"></i> Rappel</div>
+        </div>
+    </div>
+
+    <div class="config-card">
+        <h2><i class="fas fa-lightbulb me-2"></i> Note</h2>
+        <p style="font-size: 0.85rem; color: #666;">
+            Sélectionnez les critères ci-dessus pour générer un message formaté prêt à être partagé sur WhatsApp.
+        </p>
+    </div>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-eye me-2"></i> Aperçu du Message</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-box" id="previewMessage"></div>
+                <div class="mt-3 d-grid gap-2">
+                    <button class="btn btn-whatsapp" onclick="envoyerWhatsApp()">
+                        <i class="fab fa-whatsapp me-2"></i> ENVOYER VERS WHATSAPP
+                    </button>
+                    <button class="btn btn-copy" onclick="copierMessage()">
+                        <i class="fas fa-copy me-2"></i> COPIER LE TEXTE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>Concepteur : Atizoun Plateny AMOUSSOU | 01 97 74 40 35</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD6TQCk8i82nVWynaUbUuD3jbVX6d8s3jo",
+        authDomain: "smartfam-a0e79.firebaseapp.com",
+        databaseURL: "https://smartfam-a0e79-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "smartfam-a0e79",
+        storageBucket: "smartfam-a0e79.firebasestorage.app",
+        messagingSenderId: "800136496795",
+        appId: "1:800136496795:web:c30cc46068e7103925283e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // --- Gestion du Statut de Connexion ---
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+        const statusDiv = document.getElementById('connectionStatus');
+        if (snap.val() === true) {
+            statusDiv.innerText = "● En ligne";
+            statusDiv.className = "online";
+        } else {
+            statusDiv.innerText = "○ Hors ligne";
+            statusDiv.className = "offline";
+        }
+    });
+
+    // --- Chargement Configuration ---
+    onValue(ref(db, 'configTresorerie'), (snapshot) => {
+        const data = snapshot.val();
+        if(data) {
+            localStorage.setItem('configTresorerie', JSON.stringify(data));
+            window.majInterfaceConfig(data);
+        }
+    });
+
+    // --- Chargement Paiements ---
+    onValue(ref(db, 'paiements'), (snapshot) => {
+        const data = snapshot.val();
+        window.historiqueGlobal = data ? Object.keys(data).map(k => data[k]) : [];
+    });
+
+    // --- Chargement Dépenses ---
+    onValue(ref(db, 'depenses'), (snapshot) => {
+        const data = snapshot.val();
+        window.depensesGlobal = data ? Object.keys(data).map(k => data[k]) : [];
+    });
+</script>
+
+<script>
+    /* VARIABLES GLOBALES */
+    let nomFamille = "Famille AMOUSSOU";
+    window.historiqueGlobal = [];
+    window.depensesGlobal = [];
+    let bureau = { president: "", secretaire: "", tresorier: "" };
+    let messageGenere = "";
+    let previewModal;
+
+    function chargerMessages() {
+        previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        const configSaved = localStorage.getItem('configTresorerie');
+        if(configSaved) window.majInterfaceConfig(JSON.parse(configSaved));
+    }
+
+    window.majInterfaceConfig = function(configData) {
+        nomFamille = configData.nom || "Famille AMOUSSOU";
+        document.getElementById('headerFamilyName').innerText = nomFamille;
+        
+        bureau.president = configData.president ? configData.president.nom : "Le Président";
+        bureau.secretaire = configData.secretaire ? configData.secretaire.nom : "Le Secrétaire";
+        bureau.tresorier = configData.tresorier ? configData.tresorier.nom : "Le Trésorier";
+
+        // Nettoyage et remplissage des selects
+        const selectType = document.getElementById('msgTypeCotisation');
+        const selectDest = document.getElementById('msgDestinataire');
+        const selectAnnee = document.getElementById('filterAnnee');
+
+        // Garder seulement la première option par défaut
+        selectType.innerHTML = '<option value="" disabled selected>Choisir un type...</option><option value="Toutes les cotisations">Toutes les cotisations</option>';
+        selectDest.innerHTML = '<option value="Tous les membres">Tous les membres (Groupe)</option>';
+        selectAnnee.innerHTML = '';
+
+        if(configData.listes) {
+            (configData.listes.mensuelles || []).forEach(c => {
+                selectType.innerHTML += `<option value="${c.label}">${c.label} (Mens.)</option>`;
+            });
+            (configData.listes.speciales || []).forEach(c => {
+                selectType.innerHTML += `<option value="${c.label}">${c.label} (Spéc.)</option>`;
+            });
+            (configData.listes.membres || []).forEach(m => {
+                selectDest.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+            (configData.listes.annees || ["2024", "2025", "2026"]).forEach(y => {
+                const sel = (y == new Date().getFullYear()) ? "selected" : "";
+                selectAnnee.innerHTML += `<option value="${y}" ${sel}>${y}</option>`;
+            });
+        }
+    }
+
+    function gererTypeCotisation() {
+        const sel = document.getElementById('msgTypeCotisation');
+        const text = sel.options[sel.selectedIndex].text;
+        const container = document.getElementById('dateDelaiContainer');
+        if(text.includes("(Spéc.)")) {
+            container.style.display = 'block';
+            const savedDeadlines = JSON.parse(localStorage.getItem('deadlinesCotisations') || "{}");
+            document.getElementById('dateDernierDelai').value = savedDeadlines[text] || "";
+        } else {
+            container.style.display = 'none';
+        }
+        activerPeriode();
+    }
+
+    function sauvegarderDeadline() {
+        const sel = document.getElementById('msgTypeCotisation');
+        const text = sel.options[sel.selectedIndex].text;
+        const date = document.getElementById('dateDernierDelai').value;
+        const savedDeadlines = JSON.parse(localStorage.getItem('deadlinesCotisations') || "{}");
+        savedDeadlines[text] = date;
+        localStorage.setItem('deadlinesCotisations', JSON.stringify(savedDeadlines));
+    }
+
+    function activerPeriode() {
+        document.getElementById('filterMois').disabled = false;
+        document.getElementById('filterAnnee').disabled = false;
+    }
+
+    function activerDestinataire() {
+        document.getElementById('msgDestinataire').disabled = false;
+    }
+
+    function filtrerParDate(p) {
+        const moisCible = document.getElementById('filterMois').value;
+        const anneeCible = document.getElementById('filterAnnee').value;
+        
+        // Si c'est une cotisation mensuelle enregistrée avec concerneMois/concerneAnnee
+        if(p.concerneAnnee) {
+            const matchAnnee = p.concerneAnnee === anneeCible;
+            // Conversion index mois (01 -> Janvier)
+            const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            const nomMoisCible = moisCible === "Tous" ? "Tous" : moisNoms[parseInt(moisCible)-1];
+            const matchMois = moisCible === "Tous" || p.concerneMois === nomMoisCible;
+            return matchAnnee && matchMois;
+        }
+
+        // Sinon filtre par la date de l'opération
+        if(!p.date) return false;
+        const parts = p.date.split(p.date.includes('/') ? '/' : '-');
+        const year = parts[0].length === 4 ? parts[0] : parts[2];
+        const month = parts[1];
+        return (year === anneeCible) && (moisCible === "Tous" || month === moisCible);
+    }
+
+    function parseMontant(val) {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return Number(val.toString().replace(/[^0-9]/g, '')) || 0;
+    }
+
+    window.genererEtAfficher = function(type) {
+        const typeSelectionne = document.getElementById('msgTypeCotisation').value;
+        const typeLibelleComplet = document.getElementById('msgTypeCotisation').options[document.getElementById('msgTypeCotisation').selectedIndex].text;
+        const dest = document.getElementById('msgDestinataire').value;
+        const moisTexte = document.getElementById('filterMois').options[document.getElementById('filterMois').selectedIndex].text;
+        const annee = document.getElementById('filterAnnee').value;
+        const dateDeadline = document.getElementById('dateDernierDelai').value;
+        
+        if(!typeSelectionne) {
+            alert("Veuillez d'abord choisir un Type de Cotisation.");
+            return;
+        }
+
+        const formattedDeadline = dateDeadline ? new Date(dateDeadline).toLocaleDateString('fr-FR') : "";
+        const dateJour = new Date().toLocaleDateString('fr-FR');
+        const entete = `--------------------------------------\n🏛️ *${nomFamille.toUpperCase()}*\n_Bureau Exécutif Familial_\n--------------------------------------\n\n`;
+        const signature = `\n\nFait le ${dateJour}\n\n✍️ *${bureau.tresorier}*\nTrésorier Général\n\n_Visé par le Bureau :_\n- ${bureau.president} (P)\n- ${bureau.secretaire} (S)`;
+
+        const filterByType = (p) => {
+            if (typeSelectionne === "Toutes les cotisations") return true;
+            return p.cotisLabel && p.cotisLabel.includes(typeSelectionne);
+        };
+
+        if(type === 'souscription_cours' || type === 'souscription_final') {
+            const isFinal = type === 'souscription_final';
+            let listeMembres = ""; let totalS = 0;
+            
+            window.historiqueGlobal.filter(p => filterByType(p) && filtrerParDate(p)).forEach(p => {
+                const m = parseMontant(p.montant);
+                totalS += m;
+                const heure = p.horodatage ? " à " + p.horodatage.split(' ')[1] : "";
+                listeMembres += `✅ ${p.membre} (${p.date}${heure}) : ${m.toLocaleString('fr-FR')} FCFA\n`;
+            });
+
+            const titre = isFinal ? "🏁 COMPTE RENDU FINAL SOUSCRIPTION" : "⏳ POINT DE SOUSCRIPTION EN COURS";
+            const delaiInfo = (!isFinal && formattedDeadline) ? `\n⚠️ *Rappel dernier délai : ${formattedDeadline}*` : "";
+            const messageFin = isFinal ? "La souscription est maintenant clôturée. Merci à tous." : "La souscription se poursuit. Merci aux membres restants de faire diligence.";
+
+            messageGenere = entete + `*${titre}*\n📌 ${typeLibelleComplet}\n📅 ${moisTexte} ${annee}${delaiInfo}\n\n`;
+            messageGenere += `*Liste des membres ayant cotisé :*\n${listeMembres || "_Aucune cotisation enregistrée._\n"}\n`;
+            messageGenere += `💰 *MONTANT TOTAL COLLECTÉ : ${totalS.toLocaleString('fr-FR')} FCFA*\n\n`;
+            messageGenere += `_${messageFin}_` + signature;
+        }
+
+        else if(type === 'rappel') {
+            const rappelDelai = formattedDeadline ? `\n⚠️ Pour rappel, la date limite est fixée au *${formattedDeadline}*.` : "";
+            messageGenere = entete + `📢 *AVIS DE RAPPEL : ${typeLibelleComplet.toUpperCase()}*\nPériode : ${moisTexte} ${annee}${rappelDelai}\n\nCher membre *${dest}*,\n\nSauf erreur de notre part, votre contribution n'est pas enregistrée. Merci de régulariser au plus vite.` + signature;
+        } 
+
+        document.getElementById('previewMessage').innerText = messageGenere;
+        previewModal.show();
+    }
+
+    window.envoyerWhatsApp = function() {
+        const encodedMsg = encodeURIComponent(messageGenere);
+        window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+    }
+
+    window.copierMessage = function() {
+        navigator.clipboard.writeText(messageGenere).then(() => {
+            alert("Message copié !");
+        });
+    }
+</script>
+</body>
+</html>
