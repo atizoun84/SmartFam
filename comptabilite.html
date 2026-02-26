@@ -263,13 +263,17 @@
     </div>
 
     <div class="config-card">
-        <h2><i class="fas fa-tags me-2"></i> Plaquettes de Solde</h2>
-        <div id="plaquettesContainer"></div>
+        <h2><i class="fas fa-tags me-2"></i> Plaquettes de Solde
+            <button class="btn-toggle" onclick="toggleVisibility('plaquettesContainer')">Afficher</button>
+        </h2>
+        <div id="plaquettesContainer" style="display:none;"></div>
     </div>
 
     <div class="config-card">
-        <h2><i class="fas fa-chart-pie me-2"></i> Tableau de Synthèse</h2>
-        <div class="table-responsive">
+        <h2><i class="fas fa-chart-pie me-2"></i> Tableau de Synthèse
+            <button class="btn-toggle" onclick="toggleVisibility('sectionBilanSynthese')">Afficher</button>
+        </h2>
+        <div id="sectionBilanSynthese" class="table-responsive" style="display:none;">
             <table class="table table-sm table-striped">
                 <thead>
                     <tr>
@@ -487,9 +491,16 @@
     window.soldesComptes = {}; 
     let bureau = { nomFamille: "FAMILLE AHOLOU", president: "", secretaire: "", tresorier: "" };
 
-    function toggleVisibility(id) {
+    function toggleVisibility(id, btn) {
         const el = document.getElementById(id);
-        el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+        const isHidden = el.style.display === 'none' || el.style.display === '';
+        el.style.display = isHidden ? 'block' : 'none';
+        
+        // Mise à jour optionnelle du texte du bouton appelant
+        const triggerBtn = event.currentTarget;
+        if (triggerBtn && triggerBtn.classList.contains('btn-toggle')) {
+            triggerBtn.innerText = isHidden ? 'Masquer' : 'Afficher';
+        }
     }
 
     function chargerComptabilite() {

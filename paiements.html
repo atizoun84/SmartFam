@@ -355,10 +355,10 @@
   window.enregistrerPaiement = function() {
     const selMembre = document.getElementById('selectMembre');
     const montantRaw = document.getElementById('payAmount').value;
-    const date = document.getElementById('payDate').value;
+    const inputDate = document.getElementById('payDate').value;
     const selCotis = document.getElementById('selectCotis');
     
-    if(!selMembre.value || !montantRaw || !date || selCotis.selectedIndex <= 0) {
+    if(!selMembre.value || !montantRaw || !inputDate || selCotis.selectedIndex <= 0) {
         alert("Veuillez remplir tous les champs.");
         return;
     }
@@ -372,13 +372,17 @@
     const membre = selMembre.value.trim();
     const cotisLabel = selCotis.options[selCotis.selectedIndex].text.trim();
     const estMensuelle = cotisLabel.includes("(Mens.)");
+    
+    // Modification intelligente pour respecter la date choisie (Anti-datage)
     const maintenant = new Date();
-    const horodatage = maintenant.toLocaleDateString('fr-FR') + ' ' + maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+    const dateChoisie = new Date(inputDate);
+    // On garde l'heure actuelle pour le tri mais on utilise le jour/mois/année du champ date
+    const horodatage = dateChoisie.toLocaleDateString('fr-FR') + ' ' + maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
     const nouveauPaiement = {
         membre: membre,
         montant: Number(montantRaw),
-        date: date,
+        date: inputDate,
         cotisLabel: cotisLabel,
         horodatage: horodatage,
         concerneMois: estMensuelle ? document.getElementById('payMois').value : null,
@@ -413,6 +417,7 @@
     document.getElementById('payAmount').value = "";
     document.getElementById('selectCotis').selectedIndex = 0;
     document.getElementById('sectionMensuelle').style.display = "none";
+    document.getElementById('payDate').valueAsDate = new Date(); // Remet à aujourd'hui
   }
 
   function renderHistoriqueUI(historique) {
