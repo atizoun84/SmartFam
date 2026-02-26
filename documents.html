@@ -443,7 +443,9 @@
                 mFin.innerHTML += `<option value="${idx}" ${idx === 11 ? 'selected' : ''}>${m}</option>`;
             });
 
+            // Récupération des années depuis la configuration (comme dans paiements.html)
             sAnnee.innerHTML = "";
+            const currentYear = new Date().getFullYear();
             if(configData.listes && configData.listes.annees && configData.listes.annees.length > 0) {
                 configData.listes.annees.forEach(y => {
                     const opt = document.createElement('option');
@@ -451,11 +453,12 @@
                     sAnnee.appendChild(opt);
                 });
             } else {
-                const curY = new Date().getFullYear();
-                sAnnee.innerHTML = `<option value="${curY}">${curY}</option>`;
+                sAnnee.innerHTML = `<option value="${currentYear}">${currentYear}</option>`;
             }
 
+            // Récupération des types de cotisations pour le filtre
             if (configData.listes) {
+                sCotis.innerHTML = '<option value="ALL">Tout (Recettes & Dépenses)</option>';
                 configData.listes.mensuelles.forEach(c => sCotis.innerHTML += `<option value="${c.label} (Mens.)">${c.label} (Mens.)</option>`);
                 configData.listes.speciales.forEach(c => sCotis.innerHTML += `<option value="${c.label} (Spéc.)">${c.label} (Spéc.)</option>`);
             }
