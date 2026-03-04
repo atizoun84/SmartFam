@@ -443,8 +443,7 @@
                 mFin.innerHTML += `<option value="${idx}" ${idx === 11 ? 'selected' : ''}>${m}</option>`;
             });
 
-            // Récupération des années depuis la configuration (comme dans paiements.html)
-            sAnnee.innerHTML = "";
+            sAnnee.innerHTML = '<option value="TOUTES">Toutes les années</option>';
             const currentYear = new Date().getFullYear();
             if(configData.listes && configData.listes.annees && configData.listes.annees.length > 0) {
                 configData.listes.annees.forEach(y => {
@@ -453,10 +452,9 @@
                     sAnnee.appendChild(opt);
                 });
             } else {
-                sAnnee.innerHTML = `<option value="${currentYear}">${currentYear}</option>`;
+                sAnnee.innerHTML += `<option value="${currentYear}">${currentYear}</option>`;
             }
 
-            // Récupération des types de cotisations pour le filtre
             if (configData.listes) {
                 sCotis.innerHTML = '<option value="ALL">Tout (Recettes & Dépenses)</option>';
                 configData.listes.mensuelles.forEach(c => sCotis.innerHTML += `<option value="${c.label} (Mens.)">${c.label} (Mens.)</option>`);
@@ -497,7 +495,7 @@
             for (let i = debut; i <= fin; i++) totauxParMois[i] = 0;
             
             tableHeaderHtml = `<tr><th style="font-size:7pt;">Membres</th>`;
-            for (let i = debut; i <= fin; i++) tableHeaderHtml += `<th class="text-center" style="font-size:7pt;">${moisNoms[i].substring(0,3)}</th>`;
+            for (let i = debut; i <= fin; i++) tableHeaderHtml += `<th class="text-center" style="font-size:7pt;">${moisNoms[i].substring(0,3)} ${anneeSelectionnee === 'TOUTES' ? '' : ''}</th>`;
             tableHeaderHtml += `<th class="text-end" style="font-size:7pt;">Payé</th><th class="text-end" style="font-size:7pt;">Dette</th></tr>`;
 
             const listeMembres = configData.listes?.membres || [];
@@ -507,7 +505,7 @@
                 let tempRow = `<tr><td style="font-size:7pt; font-weight:bold;">${mNom}</td>`;
                 
                 for (let i = debut; i <= fin; i++) {
-                    const paiement = historique.find(p => {
+                    const paiements = historique.filter(p => {
                         let pAnnee, pMois;
                         if(p.concerneAnnee && p.concerneMois) {
                             pAnnee = String(p.concerneAnnee);
@@ -517,32 +515,49 @@
                             pAnnee = parts[0]; 
                             pMois = parseInt(parts[1]) - 1;
                         }
+                        const matchAnnee = (anneeSelectionnee === 'TOUTES') ? true : (pAnnee === String(anneeSelectionnee));
                         return p.membre.trim().toLowerCase() === mNom.trim().toLowerCase() && 
                                p.cotisLabel.toLowerCase().includes(cotisFiltrePure) && 
-                               pMois === i && pAnnee === String(anneeSelectionnee);
+                               pMois === i && matchAnnee;
                     });
 
-                    const montant = paiement ? parseFloat(paiement.montant) : 0;
-                    ligneTotalPaye += montant; 
-                    totauxParMois[i] += montant;
-                    tempRow += `<td class="text-center" style="font-size:7pt;">${montant > 0 ? montant.toLocaleString('fr-FR') : '-'}</td>`;
+                    let montantTotalMois = 0;
+                    let infoAnnee = "";
+                    paiements.forEach(p => {
+                        montantTotalMois += parseFloat(p.montant);
+                        if(anneeSelectionnee === 'TOUTES') {
+                            const y = p.concerneAnnee || p.date.split('-')[0];
+                            if(!infoAnnee.includes(y)) infoAnnee += (infoAnnee ? "," : "") + y;
+                        }
+                    });
+
+                    ligneTotalPaye += montantTotalMois; 
+                    totauxParMois[i] += montantTotalMois;
+                    
+                    let celluleTexte = montantTotalMois > 0 ? montantTotalMois.toLocaleString('fr-FR') : '-';
+                    if(anneeSelectionnee === 'TOUTES' && montantTotalMois > 0) {
+                        celluleTexte += `<br><span style="font-size:6pt; color:blue;">(${infoAnnee})</span>`;
+                    }
+                    tempRow += `<td class="text-center" style="font-size:7pt;">${celluleTexte}</td>`;
                 }
                 
-                let dMembre = Math.max(0, totalTheoriqueDuParMembre - ligneTotalPaye);
+                let dMembre = (anneeSelectionnee === 'TOUTES') ? 0 : Math.max(0, totalTheoriqueDuParMembre - ligneTotalPaye);
                 totalRecettes += ligneTotalPaye;
                 totalDetteGlobal += dMembre;
 
                 tempRow += `<td class="text-end fw-bold" style="font-size:7pt; background:#f9f9f9;">${ligneTotalPaye.toLocaleString('fr-FR')}</td>`;
-                tempRow += `<td class="text-end text-danger fw-bold" style="font-size:7pt;">${dMembre.toLocaleString('fr-FR')}</td></tr>`;
+                tempRow += `<td class="text-end text-danger fw-bold" style="font-size:7pt;">${(anneeSelectionnee === 'TOUTES') ? '-' : dMembre.toLocaleString('fr-FR')}</td></tr>`;
                 tableBodyHtml += tempRow;
             });
 
             depenses.forEach(dep => {
                 const d = new Date(dep.date);
-                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                const matchAnnee = (anneeSelectionnee === 'TOUTES') ? true : (d.getFullYear() == anneeSelectionnee);
+                if (matchAnnee && d.getMonth() >= debut && d.getMonth() <= fin) {
                     if (dep.compte && dep.compte.toLowerCase().trim() === cotisFiltrePure) {
                         totalDepenses += parseFloat(dep.montant);
-                        tableBodyHtml += `<tr style="background:#fff5f5;"><td colspan="${nbMoisSelectionnes + 1}" style="font-size:7pt; color:#d63031;"><em>Dépense : ${dep.motif} (${formaterDateLongue(dep.date || dep.id)})</em></td><td class="text-end text-danger" style="font-size:7pt;">- ${parseFloat(dep.montant).toLocaleString('fr-FR')}</td><td class="text-end">-</td></tr>`;
+                        const labelAnnee = anneeSelectionnee === 'TOUTES' ? ` [${d.getFullYear()}]` : "";
+                        tableBodyHtml += `<tr style="background:#fff5f5;"><td colspan="${nbMoisSelectionnes + 1}" style="font-size:7pt; color:#d63031;"><em>Dépense${labelAnnee} : ${dep.motif} (${formaterDateLongue(dep.date || dep.id)})</em></td><td class="text-end text-danger" style="font-size:7pt;">- ${parseFloat(dep.montant).toLocaleString('fr-FR')}</td><td class="text-end">-</td></tr>`;
                     }
                 }
             });
@@ -551,7 +566,7 @@
             tableFooterHtml = `<tr style="background:#e9ecef; font-weight:bold;"><td style="font-size:7pt;">SOLDE NET RÉEL</td>`;
             for (let i = debut; i <= fin; i++) tableFooterHtml += `<td class="text-center" style="font-size:7pt;">-</td>`;
             tableFooterHtml += `<td class="text-end" style="font-size:7pt; color:${soldeFinal >=0 ? 'var(--wa-dark-green)' : 'red'};">${soldeFinal.toLocaleString('fr-FR')}</td>`;
-            tableFooterHtml += `<td class="text-end text-danger" style="font-size:7pt;">(Dettes: ${totalDetteGlobal.toLocaleString('fr-FR')})</td></tr>`;
+            tableFooterHtml += `<td class="text-end text-danger" style="font-size:7pt;">${(anneeSelectionnee === 'TOUTES') ? '-' : '(Dettes: ' + totalDetteGlobal.toLocaleString('fr-FR') + ')'}</td></tr>`;
 
         } else {
             tableHeaderHtml = `<tr><th>Date & Heure</th><th>Libellé / Bénéficiaire</th><th>Nature</th><th class="text-end">Entrée</th><th class="text-end">Sortie</th></tr>`;
@@ -559,7 +574,8 @@
             
             historique.forEach(p => {
                 const d = new Date(p.timestamp || p.date);
-                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                const matchAnnee = (anneeSelectionnee === 'TOUTES') ? true : (d.getFullYear() == anneeSelectionnee);
+                if (matchAnnee && d.getMonth() >= debut && d.getMonth() <= fin) {
                     if (cotisFiltreRaw === 'ALL' || p.cotisLabel.toLowerCase().includes(cotisFiltrePure)) {
                         flux.push({...p, type: 'RECETTE', sortDate: d.getTime()});
                     }
@@ -568,7 +584,8 @@
 
             depenses.forEach(dep => {
                 const d = new Date(dep.date);
-                if (d.getFullYear() == anneeSelectionnee && d.getMonth() >= debut && d.getMonth() <= fin) {
+                const matchAnnee = (anneeSelectionnee === 'TOUTES') ? true : (d.getFullYear() == anneeSelectionnee);
+                if (matchAnnee && d.getMonth() >= debut && d.getMonth() <= fin) {
                     if (cotisFiltreRaw === 'ALL' || (dep.compte && dep.compte.toLowerCase().trim() === cotisFiltrePure)) {
                         flux.push({...dep, type: 'DEPENSE', sortDate: d.getTime()});
                     }
@@ -600,7 +617,7 @@
         aperçu.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 10px;">
                 <div style="text-align: left; font-size: 8pt;"><strong>RÉPUBLIQUE DU BÉNIN</strong><br><em>Fraternité - Justice - Travail</em><br><small>Collectif : ${famille}</small></div>
-                <div style="text-align: right; font-size: 8pt;"><strong>TRÉSORERIE GÉNÉRALE</strong><br>Généré le: ${formaterDateLongue(new Date())}<br>Période: ${moisNoms[debut]} - ${moisNoms[fin]} ${anneeSelectionnee}</div>
+                <div style="text-align: right; font-size: 8pt;"><strong>TRÉSORERIE GÉNÉRALE</strong><br>Généré le: ${formaterDateLongue(new Date())}<br>Période: ${moisNoms[debut]} - ${moisNoms[fin]} ${anneeSelectionnee === 'TOUTES' ? '(Multi-Années)' : anneeSelectionnee}</div>
             </div>
             <div style="text-align:center; margin-bottom:15px;"><h3 style="margin:5px 0; text-transform: uppercase; color: var(--wa-dark-green); font-size:10pt;">État de Synthèse Financière</h3><p style="margin:0; font-weight: bold; font-size:8pt;">Filtre : ${cotisFiltreRaw}</p></div>
             <table class="table table-sm table-bordered" style="width:100%; border: 1px solid black; margin-bottom:10px;"><thead style="background-color: #f2f2f2;">${tableHeaderHtml}</thead><tbody>${tableBodyHtml}</tbody><tfoot style="background-color: #eee; font-weight: bold;">${tableFooterHtml}</tfoot></table>

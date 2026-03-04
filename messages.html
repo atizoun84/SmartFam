@@ -309,16 +309,18 @@
         }
     });
 
-    // --- Chargement Paiements ---
+    // --- MISE À JOUR : Récupération intelligente de TOUS les paiements ---
     onValue(ref(db, 'paiements'), (snapshot) => {
         const data = snapshot.val();
-        window.historiqueGlobal = data ? Object.keys(data).map(k => data[k]) : [];
+        // On récupère toutes les entrées Firebase, peu importe le type (mensuel/spécial)
+        window.historiqueGlobal = data ? Object.values(data) : [];
+        console.log("Paiements synchronisés :", window.historiqueGlobal.length);
     });
 
     // --- Chargement Dépenses ---
     onValue(ref(db, 'depenses'), (snapshot) => {
         const data = snapshot.val();
-        window.depensesGlobal = data ? Object.keys(data).map(k => data[k]) : [];
+        window.depensesGlobal = data ? Object.values(data) : [];
     });
 </script>
 
@@ -353,7 +355,7 @@
         // Garder seulement la première option par défaut
         selectType.innerHTML = '<option value="" disabled selected>Choisir un type...</option><option value="Toutes les cotisations">Toutes les cotisations</option>';
         selectDest.innerHTML = '<option value="Tous les membres">Tous les membres (Groupe)</option>';
-        selectAnnee.innerHTML = '';
+        selectAnnee.innerHTML = '<option value="Toutes les années">Toutes les années</option>';
 
         if(configData.listes) {
             (configData.listes.mensuelles || []).forEach(c => {
@@ -410,8 +412,7 @@
         
         // Si c'est une cotisation mensuelle enregistrée avec concerneMois/concerneAnnee
         if(p.concerneAnnee) {
-            const matchAnnee = p.concerneAnnee === anneeCible;
-            // Conversion index mois (01 -> Janvier)
+            const matchAnnee = (anneeCible === "Toutes les années") || (p.concerneAnnee === anneeCible);
             const moisNoms = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
             const nomMoisCible = moisCible === "Tous" ? "Tous" : moisNoms[parseInt(moisCible)-1];
             const matchMois = moisCible === "Tous" || p.concerneMois === nomMoisCible;
@@ -423,7 +424,9 @@
         const parts = p.date.split(p.date.includes('/') ? '/' : '-');
         const year = parts[0].length === 4 ? parts[0] : parts[2];
         const month = parts[1];
-        return (year === anneeCible) && (moisCible === "Tous" || month === moisCible);
+        const matchAnnee = (anneeCible === "Toutes les années") || (year === anneeCible);
+        const matchMois = (moisCible === "Tous" || month === moisCible);
+        return matchAnnee && matchMois;
     }
 
     function parseMontant(val) {
@@ -463,7 +466,16 @@
                 const m = parseMontant(p.montant);
                 totalS += m;
                 const heure = p.horodatage ? " à " + p.horodatage.split(' ')[1] : "";
-                listeMembres += `✅ ${p.membre} (${p.date}${heure}) : ${m.toLocaleString('fr-FR')} FCFA\n`;
+                
+                // Si toutes les années sélectionnées, on précise l'année concernée
+                let infoPeriode = p.date;
+                if(annee === "Toutes les années" && p.concerneAnnee) {
+                    infoPeriode = `${p.concerneMois} ${p.concerneAnnee}`;
+                } else if(annee === "Toutes les années" && !p.concerneAnnee) {
+                    infoPeriode = p.date; // Garde la date complète si c'est une spéciale sans mois/an spécifié
+                }
+
+                listeMembres += `✅ ${p.membre} (${infoPeriode}${heure}) : ${m.toLocaleString('fr-FR')} FCFA\n`;
             });
 
             const titre = isFinal ? "🏁 COMPTE RENDU FINAL SOUSCRIPTION" : "⏳ POINT DE SOUSCRIPTION EN COURS";
