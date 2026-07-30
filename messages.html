@@ -329,7 +329,7 @@
     let nomFamille = "Famille AMOUSSOU";
     window.historiqueGlobal = [];
     window.depensesGlobal = [];
-    let bureau = { president: "", secretaire: "", tresorier: "" };
+    let bureau = { president: "", secretaire: "", tresorier: "", tresorierTel: "" };
     let messageGenere = "";
     let previewModal;
 
@@ -346,6 +346,7 @@
         bureau.president = configData.president ? configData.president.nom : "Le Président";
         bureau.secretaire = configData.secretaire ? configData.secretaire.nom : "Le Secrétaire";
         bureau.tresorier = configData.tresorier ? configData.tresorier.nom : "Le Trésorier";
+        bureau.tresorierTel = configData.tresorier ? configData.tresorier.tel : "";
 
         // Nettoyage et remplissage des selects
         const selectType = document.getElementById('msgTypeCotisation');
@@ -453,6 +454,11 @@
         const entete = `--------------------------------------\n🏛️ *${nomFamille.toUpperCase()}*\n_Bureau Exécutif Familial_\n--------------------------------------\n\n`;
         const signature = `\n\nFait le ${dateJour}\n\n✍️ *${bureau.tresorier}*\nTrésorier Général\n\n_Visé par le Bureau :_\n- ${bureau.president} (P)\n- ${bureau.secretaire} (S)`;
 
+        // Informations de paiement dynamiques
+        const paiementInfo = bureau.tresorierTel 
+            ? `\n\n💰 *Mode de paiement :*\n📱 Compte : *${bureau.tresorier}*\n📞 Numéro de dépôt : ${bureau.tresorierTel}`
+            : `\n\n💰 *Mode de paiement :*\n📱 Compte : *${bureau.tresorier}*`;
+
         const filterByType = (p) => {
             if (typeSelectionne === "Toutes les cotisations") return true;
             return p.cotisLabel && p.cotisLabel.includes(typeSelectionne);
@@ -485,12 +491,16 @@
             messageGenere = entete + `*${titre}*\n📌 ${typeLibelleComplet}\n📅 ${moisTexte} ${annee}${delaiInfo}\n\n`;
             messageGenere += `*Liste des membres ayant cotisé :*\n${listeMembres || "_Aucune cotisation enregistrée._\n"}\n`;
             messageGenere += `💰 *MONTANT TOTAL COLLECTÉ : ${totalS.toLocaleString('fr-FR')} FCFA*\n\n`;
-            messageGenere += `_${messageFin}_` + signature;
+            messageGenere += `_${messageFin}_`;
+            messageGenere += paiementInfo;
+            messageGenere += signature;
         }
 
         else if(type === 'rappel') {
             const rappelDelai = formattedDeadline ? `\n⚠️ Pour rappel, la date limite est fixée au *${formattedDeadline}*.` : "";
-            messageGenere = entete + `📢 *AVIS DE RAPPEL : ${typeLibelleComplet.toUpperCase()}*\nPériode : ${moisTexte} ${annee}${rappelDelai}\n\nCher membre *${dest}*,\n\nSauf erreur de notre part, votre contribution n'est pas enregistrée. Merci de régulariser au plus vite.` + signature;
+            messageGenere = entete + `📢 *AVIS DE RAPPEL : ${typeLibelleComplet.toUpperCase()}*\nPériode : ${moisTexte} ${annee}${rappelDelai}\n\nCher membre *${dest}*,\n\nSauf erreur de notre part, votre contribution n'est pas enregistrée. Merci de régulariser au plus vite.`;
+            messageGenere += paiementInfo;
+            messageGenere += signature;
         } 
 
         document.getElementById('previewMessage').innerText = messageGenere;
